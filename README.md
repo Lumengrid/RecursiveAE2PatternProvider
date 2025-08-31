@@ -17,13 +17,13 @@ Recursive AE2 Pattern Provider
 
 
 ### 🔧 **Per-Pattern Control**
-- **Toggle Recipe**: Craft any AE2 pattern with an iron ingot to make it recursive
+- **Add Recursion**: Craft any AE2 pattern with an iron ingot to make it recursive
 - **Universal Support**: Works with ALL AE2 pattern types:
 - Crafting Patterns
 - Processing Patterns
 - Smithing Table Patterns
 - Stonecutting Patterns
-- **Reversible**: Craft recursive pattern + iron ingot again to make it normal
+- **Remove Recursion**: Craft recursive pattern alone (without iron) to make it normal
 
 
 ### 🎨 **Visual Feedback**
@@ -51,6 +51,11 @@ Create any AE2 pattern normally (e.g., Iron Pickaxe recipe)
 ```
 Craft the pattern with an iron ingot in any crafting table
 
+### **Step 2b: Remove Recursion (Optional)**
+```
+[Recursive Pattern] → [Normal Pattern]
+```
+Craft the recursive pattern alone (without iron) to make it normal again
 
 ### **Step 3: Install in Pattern Provider**
 Place the recursive pattern in your Pattern Provider
@@ -81,7 +86,7 @@ The mod automatically generates patterns for:
 The mod includes several configuration options in `config/recursiveae2patternprovider-common.toml`:
 
 
-```toml 
+```toml
 # Enable/disable the entire mod
 enableRecursiveAE2PatternProvider = true
 

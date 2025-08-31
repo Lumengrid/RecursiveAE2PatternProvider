@@ -4,6 +4,7 @@ import appeng.core.definitions.AEItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 /**
  * Utility for checking AE2 patterns and recursive flags
@@ -49,5 +50,29 @@ public class PatternUtil {
         }
         
         return false;
+    }
+    
+    /**
+     * Create a recursive version of a pattern for JEI display purposes
+     */
+    public static ItemStack createRecursivePattern(ItemStack originalPattern) {
+        try {
+            ItemStack newPattern = originalPattern.copy();
+            
+            // Add recursive flag to custom data
+            var existingData = newPattern.get(DataComponents.CUSTOM_DATA);
+            CompoundTag customData = existingData != null ? existingData.copyTag() : new CompoundTag();
+            customData.putBoolean("recursive", true);
+            
+            // Use the correct way to set custom data
+            newPattern.set(DataComponents.CUSTOM_DATA, 
+                CustomData.of(customData));
+            
+            return newPattern;
+            
+        } catch (Exception e) {
+            RecursiveAE2PatternProvider.LOGGER.error("Failed to create recursive pattern for JEI: {}", e.getMessage());
+            return originalPattern.copy();
+        }
     }
 }
