@@ -9,5 +9,6 @@
   "recursiveae2patternprovider.configuration.enableRecursiveAE2PatternProvider.tooltip": "Enable recursive AE2 pattern generation. When enabled, the mod will automatically generate dependency patterns for missing crafting ingredients",
   "recursiveae2patternprovider.configuration.defaultAllowSubstitutes.tooltip": "Default setting for allowing item substitutes in auto-generated patterns when parent pattern has no substitute info. When true, allows equivalent items (e.g., different wood types) to be used in recipes",
   "recursiveae2patternprovider.configuration.defaultAllowFluidSubstitutes.tooltip": "Default setting for allowing fluid substitutes in auto-generated patterns when parent pattern has no substitute info. When true, allows equivalent fluids to be used in recipes",
-  "recursiveae2patternprovider.configuration.recursionDepth.tooltip": "Maximum recursion depth for dependency pattern generation. -1 = no limit, 0 = disable recursion, positive values = max depth"
+  "recursiveae2patternprovider.configuration.recursionDepth.tooltip": "Maximum recursion depth for dependency pattern generation. -1 = no limit, 0 = disable recursion, positive values = max depth",
+  "jei.category.recursiveae2patternprovider.recursive_pattern": "Recursive Patterns"
 }
