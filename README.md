@@ -81,7 +81,7 @@ The mod automatically generates patterns for:
 The mod includes several configuration options in `config/recursiveae2patternprovider-common.toml`:
 
 
-```toml
+```toml 
 # Enable/disable the entire mod
 enableRecursiveAE2PatternProvider = true
 
