@@ -17,13 +17,13 @@ Recursive AE2 Pattern Provider
 
 
 ### 🔧 **Per-Pattern Control**
-- **Add Recursion**: Craft any AE2 pattern with an iron ingot to make it recursive
+- **Add Recursion**: Craft any AE2 pattern with the configured recipe item (default: iron ingot) to make it recursive
 - **Universal Support**: Works with ALL AE2 pattern types:
 - Crafting Patterns
 - Processing Patterns
 - Smithing Table Patterns
 - Stonecutting Patterns
-- **Remove Recursion**: Craft recursive pattern alone (without iron) to make it normal
+- **Remove Recursion**: Craft recursive pattern alone (without the recipe item) to make it normal
 
 
 ### 🎨 **Visual Feedback**
@@ -34,6 +34,7 @@ Recursive AE2 Pattern Provider
 
 ### ⚙️ **Configuration Options**
 - **Recursion Depth**: Control how deep pattern generation goes (-1 = unlimited, 0 = disabled, 1+ = limited)
+- **Recipe Item**: Customize which item is required to craft recursive patterns (default: `minecraft:iron_ingot`)
 - **Substitute Inheritance**: Auto-generated patterns inherit substitute settings from parent patterns
 - **Default Settings**: Configure default substitute behavior for patterns without parent context
 
@@ -47,15 +48,26 @@ Create any AE2 pattern normally (e.g., Iron Pickaxe recipe)
 
 ### **Step 2: Make it Recursive**
 ```
-[AE2 Pattern] + [Iron Ingot] → [Recursive Pattern]
+[AE2 Pattern] + [Recipe Item] → [Recursive Pattern]
 ```
-Craft the pattern with an iron ingot in any crafting table
+Craft the pattern with the configured recipe item (default: iron ingot) in any crafting table
 
 ### **Step 2b: Remove Recursion (Optional)**
 ```
 [Recursive Pattern] → [Normal Pattern]
 ```
-Craft the recursive pattern alone (without iron) to make it normal again
+Craft the recursive pattern alone (without the recipe item) to make it normal again
+
+### **💡 Customizing the Recipe Item**
+To change which item is required for crafting recursive patterns, edit your mod configuration:
+```toml
+[recursiveae2patternprovider-common.toml]
+recipeItem = "minecraft:diamond"  # Use diamond instead of iron
+# Or use any other item:
+# recipeItem = "minecraft:gold_ingot"
+# recipeItem = "minecraft:emerald"
+# recipeItem = "ae2:calculation_processor"
+```
 
 ### **Step 3: Install in Pattern Provider**
 Place the recursive pattern in your Pattern Provider

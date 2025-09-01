@@ -1,5 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider.jei;
 
+import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.PatternUtil;
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import appeng.core.definitions.AEItems;
@@ -7,7 +8,9 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -23,6 +26,21 @@ public class RecursivePatternJEIPlugin implements IModPlugin {
     public ResourceLocation getPluginUid() {
         return UID;
     }
+    
+    /**
+     * Get the configured recipe item from config
+     */
+    private ItemStack getConfiguredRecipeItemStack() {
+        try {
+            String itemName = Config.RECIPE_ITEM.get();
+            ResourceLocation itemId = ResourceLocation.parse(itemName);
+            Item item = BuiltInRegistries.ITEM.get(itemId);
+            return new ItemStack(item);
+        } catch (Exception e) {
+            RecursiveAE2PatternProvider.LOGGER.warn("Invalid recipe item configured for JEI: '{}', falling back to iron ingot", Config.RECIPE_ITEM.get());
+            return new ItemStack(Items.IRON_INGOT);
+        }
+    }
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -31,21 +49,23 @@ public class RecursivePatternJEIPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
+        ItemStack configuredRecipeItem = getConfiguredRecipeItemStack();
+        
         // Create example recipes to show in JEI
         List<RecursivePatternRecipe> recipes = Arrays.asList(
-            // Add recursion: Normal Pattern + Iron Ingot → Recursive Pattern
+            // Add recursion: Normal Pattern + Recipe Item → Recursive Pattern
             new RecursivePatternRecipe(
-                Arrays.asList(AEItems.CRAFTING_PATTERN.stack(), new ItemStack(Items.IRON_INGOT)),
+                Arrays.asList(AEItems.CRAFTING_PATTERN.stack(), configuredRecipeItem),
                 createRecursivePattern(AEItems.CRAFTING_PATTERN.stack()),
                 "Add Recursion"
             ),
             new RecursivePatternRecipe(
-                Arrays.asList(AEItems.PROCESSING_PATTERN.stack(), new ItemStack(Items.IRON_INGOT)),
+                Arrays.asList(AEItems.PROCESSING_PATTERN.stack(), configuredRecipeItem.copy()),
                 createRecursivePattern(AEItems.PROCESSING_PATTERN.stack()),
                 "Add Recursion"
             ),
             new RecursivePatternRecipe(
-                Arrays.asList(AEItems.SMITHING_TABLE_PATTERN.stack(), new ItemStack(Items.IRON_INGOT)),
+                Arrays.asList(AEItems.SMITHING_TABLE_PATTERN.stack(), configuredRecipeItem.copy()),
                 createRecursivePattern(AEItems.SMITHING_TABLE_PATTERN.stack()),
                 "Add Recursion"
             ),

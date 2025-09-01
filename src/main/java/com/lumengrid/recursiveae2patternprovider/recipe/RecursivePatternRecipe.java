@@ -1,11 +1,15 @@
 package com.lumengrid.recursiveae2patternprovider.recipe;
 
+import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.PatternUtil;
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import appeng.core.definitions.AEItems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -15,19 +19,35 @@ import net.minecraft.world.level.Level;
 
 /**
  * Recipe for managing recursive patterns:
- * - Normal Pattern + Iron Ingot → Recursive Pattern
+ * - Normal Pattern + Recipe Item → Recursive Pattern
  * - Recursive Pattern (alone) → Normal Pattern  
- * - Recursive Pattern + Iron Ingot → No recipe (doesn't work)
+ * - Recursive Pattern + Recipe Item → No recipe (doesn't work)
+ * Recipe item is configurable via config (default: iron ingot)
  * Works with ALL AE2 pattern types (crafting, processing, smithing, stonecutting, etc.)
  * Note: Recipes are also displayed in JEI for reference
  */
 public class RecursivePatternRecipe implements CraftingRecipe {
     
+    /**
+     * Get the configured recipe item from config
+     */
+    private Item getConfiguredRecipeItem() {
+        try {
+            String itemName = Config.RECIPE_ITEM.get();
+            ResourceLocation itemId = ResourceLocation.parse(itemName);
+            return BuiltInRegistries.ITEM.get(itemId);
+        } catch (Exception e) {
+            RecursiveAE2PatternProvider.LOGGER.warn("Invalid recipe item configured: '{}', falling back to iron ingot", Config.RECIPE_ITEM.get());
+            return Items.IRON_INGOT;
+        }
+    }
+    
     @Override
     public boolean matches(CraftingInput input, Level level) {
         ItemStack pattern = ItemStack.EMPTY;
-        ItemStack iron = ItemStack.EMPTY;
+        ItemStack recipeItem = ItemStack.EMPTY;
         int itemCount = 0;
+        Item configuredItem = getConfiguredRecipeItem();
         
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
@@ -37,17 +57,17 @@ public class RecursivePatternRecipe implements CraftingRecipe {
                     pattern = stack;
                     RecursiveAE2PatternProvider.LOGGER.debug("Found AE2 pattern in recipe: {}", 
                         stack.getItem().builtInRegistryHolder().key().location());
-                } else if (stack.is(Items.IRON_INGOT)) {
-                    iron = stack;
+                } else if (stack.is(configuredItem)) {
+                    recipeItem = stack;
                 }
             }
         }
         
         // Accept two scenarios:
-        // 1. NON-recursive Pattern + Iron Ingot (2 items) - for making patterns recursive
+        // 1. NON-recursive Pattern + Recipe Item (2 items) - for making patterns recursive
         // 2. Recursive Pattern alone (1 item) - for removing recursive tag
-        if (itemCount == 2 && !pattern.isEmpty() && !iron.isEmpty() && !PatternUtil.isRecursive(pattern)) {
-            return true; // NON-recursive Pattern + Iron Ingot only
+        if (itemCount == 2 && !pattern.isEmpty() && !recipeItem.isEmpty() && !PatternUtil.isRecursive(pattern)) {
+            return true; // NON-recursive Pattern + Recipe Item only
         } else if (itemCount == 1 && !pattern.isEmpty() && PatternUtil.isRecursive(pattern)) {
             return true; // Recursive pattern alone
         }
@@ -58,25 +78,26 @@ public class RecursivePatternRecipe implements CraftingRecipe {
     @Override
     public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         ItemStack pattern = ItemStack.EMPTY;
-        boolean hasIron = false;
+        boolean hasRecipeItem = false;
         int itemCount = 0;
+        Item configuredItem = getConfiguredRecipeItem();
         
-        // Find pattern and check for iron
+        // Find pattern and check for configured recipe item
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
             if (!stack.isEmpty()) {
                 itemCount++;
                 if (PatternUtil.isAE2Pattern(stack)) {
                     pattern = stack;
-                } else if (stack.is(Items.IRON_INGOT)) {
-                    hasIron = true;
+                } else if (stack.is(configuredItem)) {
+                    hasRecipeItem = true;
                 }
             }
         }
         
         if (!pattern.isEmpty()) {
-            if (itemCount == 2 && hasIron) {
-                // Non-recursive Pattern + Iron Ingot: Add recursive flag
+            if (itemCount == 2 && hasRecipeItem) {
+                // Non-recursive Pattern + Recipe Item: Add recursive flag
                 // (pattern is guaranteed to be non-recursive by matches() method)
                 RecursiveAE2PatternProvider.LOGGER.debug("Adding recursive flag to: {}",
                     pattern.getItem().builtInRegistryHolder().key().location());

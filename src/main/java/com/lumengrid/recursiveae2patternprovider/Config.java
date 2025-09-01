@@ -21,5 +21,9 @@ public class Config {
             .comment("Default setting for allowing fluid substitutes in auto-generated patterns when parent pattern has no substitute info. When true, allows equivalent fluids to be used in recipes")
             .define("defaultAllowFluidSubstitutes", false);
 
+    public static final ModConfigSpec.ConfigValue<String> RECIPE_ITEM = BUILDER
+            .comment("Item required to craft recursive patterns. Use format: 'namespace:item_name'. Default is 'minecraft:iron_ingot'")
+            .define("recipeItem", "minecraft:iron_ingot");
+
     static final ModConfigSpec SPEC = BUILDER.build();
 }
