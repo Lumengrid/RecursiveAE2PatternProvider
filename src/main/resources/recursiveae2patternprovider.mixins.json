@@ -3,7 +3,8 @@
   "package": "com.lumengrid.recursiveae2patternprovider.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "PatternProviderLogicMixin"
+    "PatternProviderLogicMixin",
+    "PatternEncodingTermMenuMixin"
   ],
   "client": [],
   "injectors": {
