@@ -120,7 +120,8 @@ dependencies {
     implementation "curse.maven:supermarticonfig-438332:5546996"
     implementation "curse.maven:supermarticore-454372:6076757"
 
-    implementation "curse.maven:extendedae-892005:6863556"
+    compileOnly "curse.maven:extendedae-892005:6863556"
+    localRuntime "curse.maven:extendedae-892005:6863556"
     implementation "curse.maven:advancedae-1084104:6939457"
 
     implementation "curse.maven:jei-238222:5846880"
