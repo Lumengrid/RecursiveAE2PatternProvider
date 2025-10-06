@@ -122,7 +122,9 @@ dependencies {
 
     compileOnly "curse.maven:extendedae-892005:6863556"
     localRuntime "curse.maven:extendedae-892005:6863556"
-    implementation "curse.maven:advancedae-1084104:6939457"
+
+    compileOnly "curse.maven:advancedae-1084104:6939457"
+    localRuntime "curse.maven:advancedae-1084104:6939457"
 
     implementation "curse.maven:jei-238222:5846880"
     runtimeOnly "curse.maven:jei-238222:6829086"

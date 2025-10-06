@@ -6,7 +6,8 @@
   "mixins": [
     "PatternProviderLogicMixin",
     "PatternEncodingTermMenuMixin",
-    "TileAssemblerMatrixPatternMixin"
+    "TileAssemblerMatrixPatternMixin",
+    "AdvPatternProviderLogicMixin"
   ],
   "client": [],
   "injectors": {
