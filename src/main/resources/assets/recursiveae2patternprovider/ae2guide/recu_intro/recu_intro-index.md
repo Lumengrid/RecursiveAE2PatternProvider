@@ -1,7 +1,7 @@
 ---
 navigation:
     title: Recursive AE2 Pattern Provider
-    icon: recursiveae2patternprovider:recursiveae2patternprovider
+    icon:
     position: 100
 ---
 
