@@ -1,12 +1,10 @@
 ---
 navigation:
-    parent: rep_intro/recu_intro-index.md
-    title: Recursive AE2 Pattern Provider
-    icon: recursiveae2patternprovider:recursiveae2patternprovider
+    parent: recu_intro/recu_intro-index.md
+    icon:
+    title: How to Use
 categories:
 - recursive_patterns
-item_ids:
-- recursiveae2patternprovider:recursiveae2patternprovider
 ---
 
 # Recursive AE2 Pattern Provider
