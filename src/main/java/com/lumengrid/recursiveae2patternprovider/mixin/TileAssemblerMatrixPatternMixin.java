@@ -47,7 +47,8 @@ public class TileAssemblerMatrixPatternMixin {
             List<IPatternDetails> recursivePatterns =
                     RecursivePatternGenerator.collectRecursivePatterns(self.getPatternInventory(), level);
 
-            List<IPatternDetails> generated = RecursivePatternGenerator.generate(recursivePatterns, level, maxDepth);
+            List<IPatternDetails> generated =
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, null);
 

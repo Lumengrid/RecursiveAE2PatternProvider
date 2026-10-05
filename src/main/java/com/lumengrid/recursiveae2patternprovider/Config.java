@@ -2,6 +2,8 @@ package com.lumengrid.recursiveae2patternprovider;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+import java.util.List;
+
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
@@ -24,6 +26,18 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> RECIPE_ITEM = BUILDER
             .comment("Item required to craft recursive patterns. Use format: 'namespace:item_name'. Default is 'minecraft:iron_ingot'")
             .define("recipeItem", "minecraft:iron_ingot");
+
+    public static final ModConfigSpec.IntValue MAX_ALTERNATIVES_PER_ITEM = BUILDER
+            .comment("How many crafting recipes to generate per dependency item. 1 = only the best recipe (recommended). Higher values re-introduce alternative recipes that AE2 may pick instead of the expected one")
+            .defineInRange("maxAlternativesPerItem", 1, 1, 64);
+
+    public static final ModConfigSpec.BooleanValue SKIP_SELF_REFERENTIAL_RECIPES = BUILDER
+            .comment("Ignore recipes that consume their own output (e.g. 'clear settings' / NBT-wipe recipes) when generating dependency patterns")
+            .define("skipSelfReferentialRecipes", true);
+
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> RECIPE_BLACKLIST = BUILDER
+            .comment("Recipe ids that are never used for auto-generated patterns. Use an exact id ('modid:recipe_name') or a prefix ending with '*' ('modid:*', 'modid:reset/*')")
+            .defineListAllowEmpty("recipeBlacklist", List.of(), () -> "", o -> o instanceof String);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }
