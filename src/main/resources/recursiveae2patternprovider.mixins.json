@@ -7,6 +7,7 @@
     "PatternProviderLogicMixin",
     "PatternEncodingTermMenuMixin",
     "TileAssemblerMatrixPatternMixin",
+    "SuperAssemblerMatrixClusterMixin",
     "AdvPatternProviderLogicMixin"
   ],
   "client": [],

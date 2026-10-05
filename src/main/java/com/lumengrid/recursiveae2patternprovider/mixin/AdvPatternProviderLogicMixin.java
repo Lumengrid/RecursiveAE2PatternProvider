@@ -67,7 +67,8 @@ public class AdvPatternProviderLogicMixin {
             List<IPatternDetails> recursivePatterns =
                     RecursivePatternGenerator.collectRecursivePatterns(this.patternInventory, level);
 
-            List<IPatternDetails> generated = RecursivePatternGenerator.generate(recursivePatterns, level, maxDepth);
+            List<IPatternDetails> generated =
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, this.patternInputs);
 
