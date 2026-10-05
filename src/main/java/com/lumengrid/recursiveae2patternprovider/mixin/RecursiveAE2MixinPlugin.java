@@ -28,6 +28,13 @@ public class RecursiveAE2MixinPlugin implements IMixinConfigPlugin {
             }
             return isExtendedAELoaded;
         }
+        if (mixinClassName.contains("SuperAssemblerMatrixClusterMixin")) {
+            boolean isExtendedAELoaded = LoadingModList.get().getModFileById("extendedae_plus") != null;
+            if (!isExtendedAELoaded) {
+                System.out.println("[RecursiveAE2PatternProvider] ExtendedAEPlus not found, skipping SuperAssemblerMatrixClusterMixin");
+            }
+            return isExtendedAELoaded;
+        }
         if (mixinClassName.contains("AdvPatternProviderLogicMixin")) {
             boolean isAdvancedAELoaded = LoadingModList.get().getModFileById("advanced_ae") != null;
             if (!isAdvancedAELoaded) {

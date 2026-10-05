@@ -7,6 +7,7 @@ import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import com.lumengrid.recursiveae2patternprovider.RecursivePatternGenerator;
 import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,10 +16,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(TileAssemblerMatrixPattern.class)
+@Mixin(value = TileAssemblerMatrixPattern.class, remap = false)
 public class TileAssemblerMatrixPatternMixin {
 
     @Shadow
+    @Final
     private List<IPatternDetails> patterns;
 
     /**
@@ -47,7 +49,8 @@ public class TileAssemblerMatrixPatternMixin {
             List<IPatternDetails> recursivePatterns =
                     RecursivePatternGenerator.collectRecursivePatterns(self.getPatternInventory(), level);
 
-            List<IPatternDetails> generated = RecursivePatternGenerator.generate(recursivePatterns, level, maxDepth);
+            List<IPatternDetails> generated =
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, null);
 
