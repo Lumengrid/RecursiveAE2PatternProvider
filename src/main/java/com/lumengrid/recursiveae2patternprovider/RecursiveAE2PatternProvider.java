@@ -1,5 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider;
 
+import com.lumengrid.recursiveae2patternprovider.network.ModNetwork;
 import com.lumengrid.recursiveae2patternprovider.recipe.RecipeSerializers;
 import org.slf4j.Logger;
 
@@ -16,8 +17,7 @@ public class RecursiveAE2PatternProvider {
     public static final Logger LOGGER = LogUtils.getLogger();
     public RecursiveAE2PatternProvider(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        
-        // Register recipe serializers
+        modEventBus.addListener(ModNetwork::registerPayloadHandlers);
         RecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
     }
 }

@@ -10,7 +10,10 @@
     "SuperAssemblerMatrixClusterMixin",
     "AdvPatternProviderLogicMixin"
   ],
-  "client": [],
+  "client": [
+    "client.CraftingEncodingPanelMixin",
+    "client.ScreenAccessor"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

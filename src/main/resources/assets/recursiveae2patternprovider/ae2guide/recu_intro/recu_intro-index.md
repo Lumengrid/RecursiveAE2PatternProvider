@@ -1,15 +1,16 @@
 ---
 navigation:
-    title: Recursive AE2 Pattern Provider
-    icon:
-    position: 100
+  title: Recursive AE2 Pattern Provider
+  icon:
+  position: 100
 ---
 
 # Recursive AE2 Pattern Provider
 
-Welcome to the Recursive AE2 Pattern Provider guide! 
-This mod revolutionizes AE2 automation by automatically generating dependency patterns for complex recipes. 
-Say goodbye to tedious manual pattern creation and hello to effortless multi-tier crafting automation!
+Welcome to the Recursive AE2 Pattern Provider guide!
+This mod revolutionizes AE2 automation by automatically generating dependency patterns for complex recipes directly in your network.
+
+Say goodbye to tedious manual sub-pattern creation and hello to effortless multi-tier crafting automation!
 
 ## [✨ Key Features](recursiveae2patternprovider_key_features.md)
 

@@ -1,73 +1,62 @@
 package com.lumengrid.recursiveae2patternprovider.client;
 
+import appeng.core.definitions.AEItems;
 import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.PatternUtil;
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Items;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
+import java.util.List;
+
 /**
- * Handles adding tooltip information to AE2 patterns showing recursive status
+ * Handles adding clean, AE2-styled tooltip information to recursive crafting patterns
  */
 @EventBusSubscriber(modid = RecursiveAE2PatternProvider.MODID, value = Dist.CLIENT)
 public class TooltipHandler {
-    
-    /**
-     * Get the display name of the configured recipe item
-     */
-    private static String getConfiguredItemDisplayName() {
-        try {
-            String itemName = Config.RECIPE_ITEM.get();
-            ResourceLocation itemId = ResourceLocation.parse(itemName);
-            var item = BuiltInRegistries.ITEM.get(itemId);
-            return item.getName(item.getDefaultInstance()).getString();
-        } catch (Exception e) {
-            return Items.IRON_INGOT.getName(Items.IRON_INGOT.getDefaultInstance()).getString();
-        }
-    }
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
-        var itemStack = event.getItemStack();
+        ItemStack stack = event.getItemStack();
         if (
-            !(Config.ENABLE.get() && Config.RECURSION_DEPTH.get() != 0) ||
-            !PatternUtil.isAE2Pattern(itemStack)
+                !(Config.ENABLE.get() && Config.RECURSION_DEPTH.get() != 0) ||
+                        stack.isEmpty() ||
+                        !stack.is(AEItems.CRAFTING_PATTERN.asItem()) ||
+                        !PatternUtil.isRecursive(stack)
         ) {
             return;
         }
 
-        boolean isRecursive = PatternUtil.isRecursive(itemStack);
-        String configuredItemName = getConfiguredItemDisplayName();
-
         try {
-            var tooltip = event.getToolTip();
-            
-            if (isRecursive) {
-                // Recursive pattern tooltip
-                tooltip.add(Component.empty());
-                tooltip.add(Component.literal("🔄 Recursive")
-                        .withStyle(ChatFormatting.GREEN, ChatFormatting.ITALIC));
-                tooltip.add(Component.literal("Automatically generates dependency patterns")
-                        .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
-                if (Config.RECURSION_DEPTH.get() > 0) {
-                    tooltip.add(Component.literal("Depth: " + Config.RECURSION_DEPTH.get())
-                            .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            List<Component> tooltip = event.getToolTip();
+            Component recursiveComponent = Component.translatable("tooltip.recursiveae2patternprovider.recursive_pattern")
+                    .withStyle(ChatFormatting.GREEN);
+
+            int insertIndex = -1;
+            for (int i = 0; i < tooltip.size(); i++) {
+                Component component = tooltip.get(i);
+
+                String key = "";
+                if (component.getContents() instanceof TranslatableContents translatable) {
+                    key = translatable.getKey().toLowerCase();
                 }
-                tooltip.add(Component.empty());
-                tooltip.add(Component.literal("Craft alone to remove recursion")
-                        .withStyle(ChatFormatting.YELLOW, ChatFormatting.ITALIC));
+                String visibleText = component.getString().toLowerCase();
+                if (key.contains("encoded") || visibleText.contains("encoded") || visibleText.contains("codificato")) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+
+            if (insertIndex != -1) {
+                tooltip.add(insertIndex, recursiveComponent);
             } else {
-                // Non-recursive pattern tooltip
-                tooltip.add(Component.empty());
-                tooltip.add(Component.literal("Craft with " + configuredItemName + " to make recursive")
-                        .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
+                tooltip.add(recursiveComponent);
             }
         } catch (Exception e) {
             RecursiveAE2PatternProvider.LOGGER.debug("Error adding pattern tooltip: {}", e.getMessage());

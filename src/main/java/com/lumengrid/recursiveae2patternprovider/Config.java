@@ -11,6 +11,10 @@ public class Config {
             .comment("Enable recursive AE2 pattern generation. When enabled, the mod will automatically generate dependency patterns for missing crafting ingredients. Works with all AE2 pattern types (crafting, processing, smithing, stonecutting, etc.)")
             .define("enableRecursiveAE2PatternProvider", true);
 
+    public static final ModConfigSpec.BooleanValue ENABLE_ENCODING_GUI_TOGGLE = BUILDER
+            .comment("Show the recursive pattern toggle button in the Pattern Encoding Terminal GUI. Default is true")
+            .define("enableEncodingGuiToggle", true);
+
     public static final ModConfigSpec.IntValue RECURSION_DEPTH = BUILDER
             .comment("Maximum recursion depth for dependency pattern generation. -1 = no limit, 0 = disable recursion, positive values = max depth")
             .defineInRange("recursionDepth", -1, -1, 100);
