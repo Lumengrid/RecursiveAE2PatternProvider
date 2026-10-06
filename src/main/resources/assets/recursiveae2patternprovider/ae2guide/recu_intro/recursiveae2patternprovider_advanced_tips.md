@@ -1,28 +1,28 @@
 ---
 navigation:
-    parent: recu_intro/recu_intro-index.md
-    icon:
-    title: Advanced Tips
+  parent: recu_intro/recu_intro-index.md
+  icon:
+  title: Advanced Tips
 categories:
-- recursive_patterns
+  - recursive_patterns
 ---
 
 # Recursive AE2 Pattern Provider
 
 ## 🔧 Advanced Tips
 
-### Pattern Provider Setup
-- Place recursive patterns in Pattern Providers connected to Molecular Assemblers
-- The mod generates dependency patterns with the same substitute settings as the parent pattern
-- Use multiple Pattern Providers for better parallel processing
+### Terminal Workflow Efficiency
+- Use the **Recursive Pattern Toggle** directly in the Pattern Encoding Terminal to batch-create recursive patterns instantly without carrying extra crafting items in your inventory.
+- The toggle state in the terminal is specific to Crafting Patterns and will automatically hide when switching to Processing or Smithing modes.
+- **Configurable GUI Button**: If you prefer forcing players to craft recursive patterns via crafting table recipes only, set `enableEncodingGuiToggle = false` in the configuration file.
 
 ### Recursion Depth Control
-- **Depth 1**: Only direct ingredients
-- **Depth 3**: Ingredients + their ingredients + their ingredients (recommended)
-- **Unlimited (-1)**: Full dependency tree (use carefully)
-- **Disabled (0)**: Normal AE2 behavior
+- **Depth 1**: Only generates direct ingredients (e.g., Planks for a Chest).
+- **Depth 3**: Generates ingredients + their ingredients + logs (recommended for most setups).
+- **Unlimited (-1)**: Solves the entire dependency tree down to raw raw materials.
+- **Disabled (0)**: Restores vanilla AE2 behavior.
 
-### Performance Considerations
-- Higher recursion depths generate more patterns but provide complete automation
-- Monitor your Pattern Provider capacity when using deep recursion
-- Consider using multiple Pattern Providers for complex recipes 
+### Pattern Provider Setup & Performance
+- Place recursive patterns in Pattern Providers connected to Molecular Assemblers.
+- Auto-generated dependency patterns inherit the substitute settings (item/fluid substitution) of their parent pattern.
+- In large modpacks, keep reasonable recursion depth limits to optimize network pattern indexing times.
