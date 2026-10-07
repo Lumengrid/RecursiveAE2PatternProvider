@@ -2,31 +2,29 @@ package com.lumengrid.recursiveae2patternprovider.network;
 
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import com.lumengrid.recursiveae2patternprovider.menu.IRecursivePatternMenu;
-import net.minecraft.network.FriendlyByteBuf;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public class ToggleRecursiveModeC2SPacket implements CustomPacketPayload {
+public record ToggleRecursiveModeC2SPacket(boolean isRecursive) implements CustomPacketPayload {
+
     public static final Type<ToggleRecursiveModeC2SPacket> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(RecursiveAE2PatternProvider.MODID, "toggle_recursive_mode"));
 
-    private final boolean isRecursive;
-
-    public ToggleRecursiveModeC2SPacket(boolean isRecursive) {
-        this.isRecursive = isRecursive;
-    }
-
-    public static final StreamCodec<FriendlyByteBuf, ToggleRecursiveModeC2SPacket> STREAM_CODEC =
+    public static final StreamCodec<ByteBuf, ToggleRecursiveModeC2SPacket> STREAM_CODEC =
             StreamCodec.composite(
-                    net.minecraft.network.codec.ByteBufCodecs.BOOL, p -> p.isRecursive,
+                    ByteBufCodecs.BOOL,
+                    ToggleRecursiveModeC2SPacket::isRecursive,
                     ToggleRecursiveModeC2SPacket::new
             );
 
-    public boolean isRecursive() {
-        return isRecursive;
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
     public static void handle(final ToggleRecursiveModeC2SPacket msg, final IPayloadContext ctx) {
@@ -37,10 +35,5 @@ public class ToggleRecursiveModeC2SPacket implements CustomPacketPayload {
                 }
             }
         });
-    }
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
     }
 }
