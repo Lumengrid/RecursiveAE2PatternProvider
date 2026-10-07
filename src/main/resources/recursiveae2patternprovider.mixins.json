@@ -8,10 +8,12 @@
     "PatternEncodingTermMenuMixin",
     "TileAssemblerMatrixPatternMixin",
     "SuperAssemblerMatrixClusterMixin",
-    "AdvPatternProviderLogicMixin"
+    "AdvPatternProviderLogicMixin",
+    "WirelessComprehensiveWorkTerminalMenuMixin"
   ],
   "client": [
     "client.CraftingEncodingPanelMixin",
+    "client.WirelessComprehensiveWorkTerminalScreenMixin",
     "client.ScreenAccessor"
   ],
   "injectors": {

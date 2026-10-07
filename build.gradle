@@ -91,6 +91,8 @@ dependencies {
 
     compileOnly "curse.maven:jei-238222:8870333"
     // runtimeOnly "curse.maven:jei-238222:8870333"
+
+    compileOnly "curse.maven:ae2-wcwt-1546802:8970875"
 }
 
 tasks.withType(ProcessResources).configureEach {
