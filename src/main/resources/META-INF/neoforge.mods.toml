@@ -89,14 +89,14 @@ config="${mod_id}.mixins.json"
 [[dependencies.${mod_id}]]
     modId="ae2"
     mandatory=true
-    versionRange="[19.0.0,)"
+    versionRange="[26.1.0,)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
     modId="guideme"
     mandatory=false
-    versionRange="[21.0.0,)"
+    versionRange="[26.1.0,)"
     ordering="AFTER"
     side="BOTH"
 

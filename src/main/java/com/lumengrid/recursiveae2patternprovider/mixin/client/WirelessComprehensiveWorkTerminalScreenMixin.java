@@ -1,6 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider.mixin.client;
 
-import appeng.client.gui.Icon;
+import appeng.util.Icon;
 import appeng.client.gui.widgets.ToggleButton;
 import appeng.parts.encoding.EncodingMode;
 import com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen;

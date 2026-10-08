@@ -1,6 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider.mixin.client;
 
-import appeng.client.gui.Icon;
+import appeng.util.Icon;
 import appeng.client.gui.WidgetContainer;
 import appeng.client.gui.me.items.CraftingEncodingPanel;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;
