@@ -10,19 +10,19 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class RecursivePatternRecipeCategory implements IRecipeCategory<RecursivePatternJEIPlugin.RecursivePatternRecipe> {
-    
-    public static final RecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> RECIPE_TYPE = 
-        RecipeType.create(RecursiveAE2PatternProvider.MODID, "recursive_pattern", RecursivePatternJEIPlugin.RecursivePatternRecipe.class);
+
+    public static final RecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> RECIPE_TYPE =
+            RecipeType.create(RecursiveAE2PatternProvider.MODID, "recursive_pattern", RecursivePatternJEIPlugin.RecursivePatternRecipe.class);
 
     private final IDrawable background;
     private final IDrawable icon;
     private final Component title;
 
     public RecursivePatternRecipeCategory(IGuiHelper guiHelper) {
-        ResourceLocation location = ResourceLocation.withDefaultNamespace("textures/gui/container/crafting_table.png");
+        Identifier location = Identifier.withDefaultNamespace("textures/gui/container/crafting_table.png");
         this.background = guiHelper.createDrawable(location, 29, 16, 116, 54);
         this.icon = guiHelper.createDrawableItemStack(AEItems.CRAFTING_PATTERN.stack());
         this.title = Component.translatable("jei.category.recursiveae2patternprovider.recursive_pattern");
@@ -51,20 +51,18 @@ public class RecursivePatternRecipeCategory implements IRecipeCategory<Recursive
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, RecursivePatternJEIPlugin.RecursivePatternRecipe recipe, IFocusGroup focuses) {
         if (recipe.getInputs().size() == 2) {
-            // Pattern + Iron Ingot recipe
             builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
-                   .addItemStack(recipe.getInputs().get(0)); // Pattern
-            
+                    .addItemStack(recipe.getInputs().get(0));
+
             builder.addSlot(RecipeIngredientRole.INPUT, 19, 1)
-                   .addItemStack(recipe.getInputs().get(1)); // Iron Ingot
+                    .addItemStack(recipe.getInputs().get(1));
         } else if (recipe.getInputs().size() == 1) {
-            // Pattern alone recipe
             builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
-                   .addItemStack(recipe.getInputs().get(0)); // Recursive Pattern
+                    .addItemStack(recipe.getInputs().get(0));
         }
 
         builder.addSlot(RecipeIngredientRole.OUTPUT, 95, 19)
-               .addItemStack(recipe.getOutput()); // Result
+                .addItemStack(recipe.getOutput());
     }
 
     @Override
