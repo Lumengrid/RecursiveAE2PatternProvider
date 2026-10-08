@@ -15,21 +15,18 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.List;
 
-/**
- * Handles adding clean, AE2-styled tooltip information to recursive crafting patterns
- */
 @EventBusSubscriber(modid = RecursiveAE2PatternProvider.MODID, value = Dist.CLIENT)
 public class TooltipHandler {
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        if (
-                !(Config.ENABLE.get() && Config.RECURSION_DEPTH.get() != 0) ||
-                        stack.isEmpty() ||
-                        !stack.is(AEItems.CRAFTING_PATTERN.asItem()) ||
-                        !PatternUtil.isRecursive(stack)
-        ) {
+
+        if (!Config.ENABLE.get() || Config.RECURSION_DEPTH.get() == 0 || stack.isEmpty()) {
+            return;
+        }
+
+        if (!stack.is(AEItems.CRAFTING_PATTERN.asItem()) || !PatternUtil.isRecursive(stack)) {
             return;
         }
 
@@ -38,28 +35,28 @@ public class TooltipHandler {
             Component recursiveComponent = Component.translatable("tooltip.recursiveae2patternprovider.recursive_pattern")
                     .withStyle(ChatFormatting.GREEN);
 
-            int insertIndex = -1;
+            int insertIndex = tooltip.size();
             for (int i = 0; i < tooltip.size(); i++) {
                 Component component = tooltip.get(i);
 
-                String key = "";
                 if (component.getContents() instanceof TranslatableContents translatable) {
-                    key = translatable.getKey().toLowerCase();
-                }
-                String visibleText = component.getString().toLowerCase();
-                if (key.contains("encoded") || visibleText.contains("encoded") || visibleText.contains("codificato")) {
-                    insertIndex = i;
-                    break;
+                    String key = translatable.getKey().toLowerCase();
+                    if (key.contains("encoded")) {
+                        insertIndex = i;
+                        break;
+                    }
+                } else {
+                    String visibleText = component.getString().toLowerCase();
+                    if (visibleText.contains("encoded") || visibleText.contains("codificato")) {
+                        insertIndex = i;
+                        break;
+                    }
                 }
             }
+            tooltip.add(insertIndex, recursiveComponent);
 
-            if (insertIndex != -1) {
-                tooltip.add(insertIndex, recursiveComponent);
-            } else {
-                tooltip.add(recursiveComponent);
-            }
         } catch (Exception e) {
-            RecursiveAE2PatternProvider.LOGGER.debug("Error adding pattern tooltip: {}", e.getMessage());
+            RecursiveAE2PatternProvider.LOGGER.debug("Errore nell'aggiunta del tooltip al pattern: {}", e.getMessage());
         }
     }
 }
