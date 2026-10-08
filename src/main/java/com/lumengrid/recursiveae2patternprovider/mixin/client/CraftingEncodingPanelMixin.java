@@ -7,8 +7,8 @@ import appeng.client.gui.me.items.PatternEncodingTermScreen;
 import appeng.client.gui.widgets.ToggleButton;
 import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.network.ToggleRecursiveModeC2SPacket;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -42,7 +42,9 @@ public abstract class CraftingEncodingPanelMixin {
                 Icon.S_SUBSTITUTION_DISABLED,
                 state -> {
                     this.isRecursiveLocal = state;
-                    PacketDistributor.sendToServer(new ToggleRecursiveModeC2SPacket(this.isRecursiveLocal));
+                    if (Minecraft.getInstance().getConnection() != null) {
+                        Minecraft.getInstance().getConnection().send(new ToggleRecursiveModeC2SPacket(this.isRecursiveLocal));
+                    }
                 }
         );
 

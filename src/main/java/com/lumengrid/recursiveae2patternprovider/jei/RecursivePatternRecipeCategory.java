@@ -7,15 +7,15 @@ import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public class RecursivePatternRecipeCategory implements IRecipeCategory<RecursivePatternJEIPlugin.RecursivePatternRecipe> {
 
-    public static final RecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> RECIPE_TYPE =
-            RecipeType.create(RecursiveAE2PatternProvider.MODID, "recursive_pattern", RecursivePatternJEIPlugin.RecursivePatternRecipe.class);
+    public static final IRecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> RECIPE_TYPE =
+            IRecipeType.create(RecursiveAE2PatternProvider.MODID, "recursive_pattern", RecursivePatternJEIPlugin.RecursivePatternRecipe.class);
 
     private final IDrawable background;
     private final IDrawable icon;
@@ -29,7 +29,7 @@ public class RecursivePatternRecipeCategory implements IRecipeCategory<Recursive
     }
 
     @Override
-    public RecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> getRecipeType() {
+    public IRecipeType<RecursivePatternJEIPlugin.RecursivePatternRecipe> getRecipeType() {
         return RECIPE_TYPE;
     }
 
@@ -39,6 +39,15 @@ public class RecursivePatternRecipeCategory implements IRecipeCategory<Recursive
     }
 
     @Override
+    public int getWidth() {
+        return 116;
+    }
+
+    @Override
+    public int getHeight() {
+        return 54;
+    }
+
     public IDrawable getBackground() {
         return background;
     }
@@ -52,17 +61,17 @@ public class RecursivePatternRecipeCategory implements IRecipeCategory<Recursive
     public void setRecipe(IRecipeLayoutBuilder builder, RecursivePatternJEIPlugin.RecursivePatternRecipe recipe, IFocusGroup focuses) {
         if (recipe.getInputs().size() == 2) {
             builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
-                    .addItemStack(recipe.getInputs().get(0));
+                    .add(recipe.getInputs().get(0));
 
             builder.addSlot(RecipeIngredientRole.INPUT, 19, 1)
-                    .addItemStack(recipe.getInputs().get(1));
+                    .add(recipe.getInputs().get(1));
         } else if (recipe.getInputs().size() == 1) {
             builder.addSlot(RecipeIngredientRole.INPUT, 1, 1)
-                    .addItemStack(recipe.getInputs().get(0));
+                    .add(recipe.getInputs().get(0));
         }
 
         builder.addSlot(RecipeIngredientRole.OUTPUT, 95, 19)
-                .addItemStack(recipe.getOutput());
+                .add(recipe.getOutput());
     }
 
     @Override

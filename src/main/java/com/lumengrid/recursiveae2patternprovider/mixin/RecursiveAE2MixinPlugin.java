@@ -1,6 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider.mixin;
 
-import net.neoforged.fml.loading.LoadingModList;
+import net.neoforged.fml.loading.FMLLoader;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -22,21 +22,21 @@ public class RecursiveAE2MixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (mixinClassName.contains("TileAssemblerMatrixPatternMixin")) {
-            boolean isExtendedAELoaded = LoadingModList.get().getModFileById("extendedae") != null;
+            boolean isExtendedAELoaded = FMLLoader.getCurrent().getLoadingModList().getModFileById("extendedae") != null;
             if (!isExtendedAELoaded) {
                 System.out.println("[RecursiveAE2PatternProvider] ExtendedAE not found, skipping TileAssemblerMatrixPatternMixin");
             }
             return isExtendedAELoaded;
         }
         if (mixinClassName.contains("SuperAssemblerMatrixClusterMixin")) {
-            boolean isExtendedAELoaded = LoadingModList.get().getModFileById("extendedae_plus") != null;
+            boolean isExtendedAELoaded = FMLLoader.getCurrent().getLoadingModList().getModFileById("extendedae_plus") != null;
             if (!isExtendedAELoaded) {
                 System.out.println("[RecursiveAE2PatternProvider] ExtendedAEPlus not found, skipping SuperAssemblerMatrixClusterMixin");
             }
             return isExtendedAELoaded;
         }
         if (mixinClassName.contains("AdvPatternProviderLogicMixin")) {
-            boolean isAdvancedAELoaded = LoadingModList.get().getModFileById("advanced_ae") != null;
+            boolean isAdvancedAELoaded = FMLLoader.getCurrent().getLoadingModList().getModFileById("advanced_ae") != null;
             if (!isAdvancedAELoaded) {
                 System.out.println("[RecursiveAE2PatternProvider] AdvancedAE not found, skipping AdvPatternProviderLogicMixin");
             }
@@ -62,4 +62,3 @@ public class RecursiveAE2MixinPlugin implements IMixinConfigPlugin {
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
     }
 }
-

@@ -6,9 +6,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
-/**
- * Utility for checking AE2 patterns and recursive flags
- */
 public class PatternUtil {
 
     public static boolean isAE2Pattern(ItemStack stack) {
@@ -37,7 +34,7 @@ public class PatternUtil {
             var customData = patternStack.get(DataComponents.CUSTOM_DATA);
             if (customData != null) {
                 CompoundTag tag = customData.copyTag();
-                return tag.getBoolean("recursive");
+                return tag.getBoolean("recursive").orElse(false);
             }
         } catch (Exception e) {
             RecursiveAE2PatternProvider.LOGGER.debug("Failed to read recursive flag: {}", e.getMessage());

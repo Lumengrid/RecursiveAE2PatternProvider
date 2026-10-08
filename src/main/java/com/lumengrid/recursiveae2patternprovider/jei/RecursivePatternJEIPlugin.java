@@ -6,10 +6,11 @@ import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
 import appeng.core.definitions.AEItems;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
-import net.minecraft.resources.Identifier;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -31,7 +32,7 @@ public class RecursivePatternJEIPlugin implements IModPlugin {
         try {
             String itemName = Config.RECIPE_ITEM.get();
             Identifier itemId = Identifier.parse(itemName);
-            Item item = BuiltInRegistries.ITEM.get(itemId);
+            Item item = BuiltInRegistries.ITEM.get(itemId).map(Holder::value).orElse(Items.IRON_INGOT);
             return new ItemStack(item);
         } catch (Exception e) {
             RecursiveAE2PatternProvider.LOGGER.warn("Invalid recipe item configured for JEI: '{}', falling back to iron ingot", Config.RECIPE_ITEM.get());
