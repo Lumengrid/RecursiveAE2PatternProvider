@@ -75,6 +75,7 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url = 'https://maven.blamejared.com' }
     exclusiveContent {
         forRepository {
             maven { url = 'https://www.cursemaven.com' }
@@ -118,7 +119,7 @@ dependencies {
     // AdvancedAE
     compileOnly "curse.maven:advancedae-1084104:8603081"
 
-    compileOnly "curse.maven:jei-238222:8870333"
+    compileOnly "curse.maven:jei-238222:9068105"
 
     compileOnly "curse.maven:ae2-wcwt-1546802:8970875"
 }
