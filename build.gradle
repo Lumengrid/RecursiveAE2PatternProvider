@@ -1,50 +1,69 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.192'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.141'
 }
 
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 version = mod_version
 group = mod_group_id
-
-repositories {
-    maven {
-        url = "https://www.cursemaven.com"
-    }
-}
 
 base {
     archivesName = mod_id
 }
 
+// NeoForge 26.1.x usa Java 25.
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
-runs {
-    configureEach {
-        systemProperty 'forge.logging.markers', 'REGISTRIES'
-        systemProperty 'forge.logging.console.level', 'debug'
-        modSource project.sourceSets.main
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            clientData()
+
+            programArguments.addAll(
+                    '--mod', project.mod_id,
+                    '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+            )
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
     }
 
-    client {
-        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-    }
-
-    server {
-        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        argument '--nogui'
-    }
-
-    gameTestServer {
-        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-    }
-
-    data {
-        arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
     }
 }
 
@@ -54,12 +73,22 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+repositories {
+    mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven { url = 'https://www.cursemaven.com' }
+        }
+        filter {
+            includeGroup 'curse.maven'
+        }
+    }
+}
+
 dependencies {
     // Applied Energistics 2 Base (v26.1.x)
     compileOnly "curse.maven:applied-energistics-2-223794:9022271"
     runtimeOnly "curse.maven:applied-energistics-2-223794:9022271"
-
-    implementation "net.neoforged:neoforge:${neo_version}"
 
     implementation "curse.maven:titanium-287342:6443608"
     implementation "curse.maven:guideme-1173950:9022838"
@@ -82,18 +111,14 @@ dependencies {
 
     // ExtendedAE
     compileOnly "curse.maven:extendedae-892005:8698967"
-    // localRuntime "curse.maven:extendedae-892005:8698967"
 
     // ExtendedAE Plus
     compileOnly "curse.maven:extendedae-1337639:9006822"
-    // localRuntime "curse.maven:extendedae-1337639:9006822"
 
     // AdvancedAE
     compileOnly "curse.maven:advancedae-1084104:8603081"
-    // localRuntime "curse.maven:advancedae-1084104:8603081"
 
     compileOnly "curse.maven:jei-238222:8870333"
-    // runtimeOnly "curse.maven:jei-238222:8870333"
 
     compileOnly "curse.maven:ae2-wcwt-1546802:8970875"
 }
@@ -126,7 +151,7 @@ publishing {
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/repo"
+            url = uri("file://${project.projectDir}/repo")
         }
     }
 }
