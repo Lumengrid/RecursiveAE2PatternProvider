@@ -298,6 +298,7 @@ public final class RecursivePatternGenerator {
                 }
 
                 ctx.generated.add(aePattern);
+                PlanExplanation.registerGenerated(aePattern);
                 created++;
 
                 boolean added = ctx.ancestors.add(targetType);
