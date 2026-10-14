@@ -26,8 +26,16 @@ final class RecipeAlternatives {
 
     boolean isConversion(CraftingRecipe recipe, Item target) {
         try {
+            return isConversion(grid.apply(recipe), target);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    boolean isConversion(ItemStack[] inputs, Item target) {
+        try {
             Item source = null;
-            for (var input : grid.apply(recipe)) {
+            for (var input : inputs) {
                 if (input.isEmpty()) continue;
                 if (source != null && source != input.getItem()) return false;
                 source = input.getItem();
