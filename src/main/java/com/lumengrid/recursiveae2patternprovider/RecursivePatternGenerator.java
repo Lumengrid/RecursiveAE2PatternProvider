@@ -268,8 +268,9 @@ public final class RecursivePatternGenerator {
                 .toList();
 
         int created = 0;
+        int patternsCreated = 0;
         for (var recipe : ordered) {
-            if (created >= ctx.settings.maxAlternativesPerItem()) {
+            if (created >= ctx.settings.maxAlternativesPerItem() || patternsCreated >= 64) {
                 break;
             }
 
@@ -282,32 +283,32 @@ public final class RecursivePatternGenerator {
                     continue;
                 }
 
-                ItemStack[] inputs = getRecipeInputsAs3x3Grid(recipe.value());
-
-                if (containsAny(inputs, ctx.ancestors) || containsItem(inputs, targetType)) {
-                    RecursiveAE2PatternProvider.LOGGER.debug("Skipping cyclic recipe {} for {}",
-                            recipe.id(), targetType);
-                    continue;
-                }
-
-                ctx.processedRecipes.add(recipe.id().toString());
-
-                AECraftingPattern aePattern = encodePattern(recipe, inputs, recipeOutput, parentPattern, ctx.level);
-                if (aePattern == null || aePattern.getOutputs() == null || aePattern.getOutputs().isEmpty()) {
-                    continue;
-                }
-
-                ctx.generated.add(aePattern);
-                created++;
-
-                boolean added = ctx.ancestors.add(targetType);
-                try {
-                    generateDependencyPatterns(aePattern, currentDepth + 1, ctx);
-                } finally {
-                    if (added) {
-                        ctx.ancestors.remove(targetType);
+                ItemStack[] original = getRecipeInputsAs3x3Grid(recipe.value());
+                List<ItemStack[]> variants = Config.GENERATED_INGREDIENT_ALTERNATIVES.get()
+                        ? RecipeInputVariants.generate(recipe.value(), original, recipeOutput, ctx.level, 64 - patternsCreated)
+                        : java.util.Collections.singletonList(original);
+                boolean createdRecipe = false;
+                for (ItemStack[] inputs : variants) {
+                    if (patternsCreated >= 64) break;
+                    if (containsAny(inputs, ctx.ancestors) || containsItem(inputs, targetType)) continue;
+                    try {
+                        AECraftingPattern aePattern = encodePattern(recipe, inputs, recipeOutput, parentPattern, ctx.level);
+                        if (aePattern == null || aePattern.getOutputs() == null || aePattern.getOutputs().isEmpty()) continue;
+                        ctx.generated.add(aePattern);
+                        patternsCreated++;
+                        createdRecipe = true;
+                        ctx.processedRecipes.add(recipe.id().toString());
+                        boolean added = ctx.ancestors.add(targetType);
+                        try {
+                            generateDependencyPatterns(aePattern, currentDepth + 1, ctx);
+                        } finally {
+                            if (added) ctx.ancestors.remove(targetType);
+                        }
+                    } catch (RuntimeException e) {
+                        RecursiveAE2PatternProvider.LOGGER.debug("Failed ingredient variant for {}: {}", recipe.id(), e.getMessage());
                     }
                 }
+                if (createdRecipe) created++;
 
             } catch (Exception e) {
                 RecursiveAE2PatternProvider.LOGGER.debug("Failed to create dependency pattern for recipe: {} - {}",
@@ -319,6 +320,12 @@ public final class RecursivePatternGenerator {
     private static AECraftingPattern encodePattern(RecipeHolder<CraftingRecipe> recipe, ItemStack[] inputs,
                                                    ItemStack output, IPatternDetails parentPattern,
                                                    Level level) {
+        ItemStack patternStack = encodePatternStack(recipe, inputs, output, parentPattern);
+        return new AECraftingPattern(Objects.requireNonNull(AEItemKey.of(patternStack)), level);
+    }
+
+    static ItemStack encodePatternStack(RecipeHolder<CraftingRecipe> recipe, ItemStack[] inputs,
+                                       ItemStack output, IPatternDetails parentPattern) {
         ItemStack patternStack = AEItems.CRAFTING_PATTERN.stack();
 
         boolean allowSubstitutes = Config.DEFAULT_ALLOW_SUBSTITUTES.get();
@@ -329,8 +336,10 @@ public final class RecursivePatternGenerator {
             allowFluidSubstitutes = parentCraftingPattern.canSubstituteFluids();
         }
 
+        if (Config.GENERATED_INGREDIENT_ALTERNATIVES.get()) allowSubstitutes = true;
+
         AECraftingPattern.encode(patternStack, recipe, inputs, output, allowSubstitutes, allowFluidSubstitutes);
-        return new AECraftingPattern(Objects.requireNonNull(AEItemKey.of(patternStack)), level);
+        return patternStack;
     }
 
     private static boolean usesItem(CraftingRecipe recipe, Item item) {

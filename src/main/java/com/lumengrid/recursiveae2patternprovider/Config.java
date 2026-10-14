@@ -43,5 +43,9 @@ public class Config {
             .comment("Recipe ids that are never used for auto-generated patterns. Use an exact id ('modid:recipe_name') or a prefix ending with '*' ('modid:*', 'modid:reset/*')")
             .defineListAllowEmpty("recipeBlacklist", List.of(), () -> "", o -> o instanceof String);
 
+    public static final ModConfigSpec.BooleanValue GENERATED_INGREDIENT_ALTERNATIVES = BUILDER
+            .comment("Allow recipe-valid item alternatives in auto-generated patterns (e.g. interchangeable logs/planks). AE2 validates the recipe and unchanged output. Does not change manually encoded root patterns. When false, generated patterns inherit the parent substitution setting.")
+            .define("generatedIngredientAlternatives", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 }
