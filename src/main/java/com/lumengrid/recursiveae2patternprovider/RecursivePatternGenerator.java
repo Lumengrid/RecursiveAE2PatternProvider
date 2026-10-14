@@ -36,16 +36,18 @@ public final class RecursivePatternGenerator {
         }
     }
 
-    private record Settings(int maxAlternativesPerItem, boolean skipSelfReferential,
+    private record Settings(int maxAlternativesPerItem, boolean retainAlternatives, boolean skipSelfReferential,
                             Set<String> blacklistExact, List<String> blacklistPrefixes) {
 
         static Settings fromConfig() {
             int maxAlternatives = 1;
+            boolean retainAlternatives = true;
             boolean skipSelf = true;
             Set<String> exact = new HashSet<>();
             List<String> prefixes = new ArrayList<>();
             try {
                 maxAlternatives = Math.max(1, Config.MAX_ALTERNATIVES_PER_ITEM.get());
+                retainAlternatives = Config.RETAIN_RECIPE_ALTERNATIVES.get();
                 skipSelf = Config.SKIP_SELF_REFERENTIAL_RECIPES.get();
                 for (Object entry : Config.RECIPE_BLACKLIST.get()) {
                     if (entry == null) continue;
@@ -61,7 +63,7 @@ public final class RecursivePatternGenerator {
                 RecursiveAE2PatternProvider.LOGGER.warn("Failed to read recipe selection config, using defaults: {}",
                         e.getMessage());
             }
-            return new Settings(maxAlternatives, skipSelf, exact, prefixes);
+            return new Settings(maxAlternatives, retainAlternatives, skipSelf, exact, prefixes);
         }
 
         boolean isBlacklisted(Identifier recipeId) {
@@ -83,12 +85,16 @@ public final class RecursivePatternGenerator {
         final Set<AEItemKey> processedItems = new HashSet<>();
         final Set<Item> ancestors = new HashSet<>();
         final List<IPatternDetails> generated = new ArrayList<>();
+        final RecipeAlternatives alternatives;
 
         Context(Level level, int maxDepth, Map<Item, List<RecipeHolder<CraftingRecipe>>> index, Settings settings) {
             this.level = level;
             this.maxDepth = maxDepth;
             this.index = index;
             this.settings = settings;
+            this.alternatives = new RecipeAlternatives(index,
+                    RecursivePatternGenerator::getRecipeInputsAs3x3Grid,
+                    r -> !settings.isBlacklisted(r.id().identifier()));
         }
     }
 
@@ -269,7 +275,7 @@ public final class RecursivePatternGenerator {
 
         int created = 0;
         for (var recipe : ordered) {
-            if (created >= ctx.settings.maxAlternativesPerItem()) {
+            if (created >= (ctx.settings.retainAlternatives() ? 64 : ctx.settings.maxAlternativesPerItem())) {
                 break;
             }
 
@@ -299,6 +305,13 @@ public final class RecursivePatternGenerator {
 
                 ctx.generated.add(aePattern);
                 created++;
+
+                // Leave both conversion directions available to AE2, but don't
+                // recursively turn their source into a compression ladder.
+                if (ctx.settings.retainAlternatives()
+                        && ctx.alternatives.isConversion(recipe.value(), targetType)) {
+                    continue;
+                }
 
                 boolean added = ctx.ancestors.add(targetType);
                 try {
