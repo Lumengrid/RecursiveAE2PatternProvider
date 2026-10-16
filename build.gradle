@@ -8,6 +8,10 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 version = mod_version
 group = mod_group_id
 
@@ -46,6 +50,11 @@ runs {
     data {
         arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
     }
+
+    // NeoGradle creates a 'tests' run for the test source set; give it the JUnit run type 1.21.1 userdev provides.
+    tests {
+        runType 'junit'
+    }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
@@ -56,6 +65,11 @@ configurations {
 
 dependencies {
     // Applied Energistics 2 Base
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+    testImplementation "net.neoforged:testframework:${neo_version}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation "curse.maven:applied-energistics-2-223794:6890346"
     compileOnly "curse.maven:applied-energistics-2-223794:6890346"
     runtimeOnly "curse.maven:applied-energistics-2-223794:6890346"
 
@@ -93,6 +107,23 @@ dependencies {
     // runtimeOnly "curse.maven:jei-238222:8870333"
 
     compileOnly "curse.maven:ae2-wcwt-1546802:8970875"
+}
+
+// The tests need a NeoForge test server that is not wired up yet: run them only with -PrunTests.
+if (project.hasProperty('runTests')) {
+    tasks.named('test', Test) {
+        useJUnitPlatform()
+    }
+} else {
+    gradle.startParameter.excludedTaskNames << 'test'
+}
+
+// Keep unrelated optional integrations out of the recipe regression environment.
+configurations.testRuntimeClasspath {
+    ['titanium-287342', 'athena-841890', 'geckolib-388172', 'glodium-957920',
+     'ftlibrary-404465', 'ftpessential-410811', 'rhino-416294', 'kubejs-238086'].each {
+        exclude group: 'curse.maven', module: it
+    }
 }
 
 tasks.withType(ProcessResources).configureEach {
