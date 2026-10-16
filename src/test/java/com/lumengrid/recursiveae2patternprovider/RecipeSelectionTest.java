@@ -52,12 +52,12 @@ class RecipeSelectionTest {
     @Test
     @SuppressWarnings("unchecked")
     void vanillaRecipeIndexRecognizesSmeltedMetals(MinecraftServer server) throws Exception {
-        var indexMethod = RecursivePatternGenerator.class.getDeclaredMethod("getRecipeIndex", net.minecraft.world.level.Level.class);
-        var basesMethod = RecursivePatternGenerator.class.getDeclaredMethod("getFurnaceOutputs", net.minecraft.world.level.Level.class);
+        var indexMethod = RecursivePatternGenerator.class.getDeclaredMethod("getRecipeIndex", RecipeManager.class, net.minecraft.core.HolderLookup.Provider.class);
+        var basesMethod = RecursivePatternGenerator.class.getDeclaredMethod("getFurnaceOutputs", RecipeManager.class, net.minecraft.core.HolderLookup.Provider.class);
         indexMethod.setAccessible(true);
         basesMethod.setAccessible(true);
-        var recipes = (Map<Item, List<RecipeHolder<CraftingRecipe>>>) indexMethod.invoke(null, server.overworld());
-        var bases = (Set<Item>) basesMethod.invoke(null, server.overworld());
+        var recipes = (Map<Item, List<RecipeHolder<CraftingRecipe>>>) indexMethod.invoke(null, server.getRecipeManager(), server.registryAccess());
+        var bases = (Set<Item>) basesMethod.invoke(null, server.getRecipeManager(), server.registryAccess());
         assertTrue(bases.containsAll(Set.of(Items.IRON_INGOT, Items.COPPER_INGOT, Items.GOLD_INGOT)));
         var selection = new RecipeSelection(recipes, bases, server.registryAccess(), r -> true, this::grid);
         assertTrue(selection.rank(Items.IRON_INGOT, Set.of()).isEmpty());

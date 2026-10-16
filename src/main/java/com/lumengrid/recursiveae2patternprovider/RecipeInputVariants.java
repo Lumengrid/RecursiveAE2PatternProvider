@@ -1,5 +1,6 @@
 package com.lumengrid.recursiveae2patternprovider;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -62,7 +63,7 @@ final class RecipeInputVariants {
                                    List<ItemStack[]> result) {
         var input = CraftingInput.of(3, 3, Arrays.asList(inputs));
         try {
-            if (!recipe.matches(input, level) || !ItemStack.matches(expected, recipe.assemble(input, level.registryAccess()))) return;
+            if (!recipe.matches(input, level) || !ItemStack.matches(expected, recipe.assemble(input, level != null ? level.registryAccess() : RegistryAccess.EMPTY))) return;
             for (var existing : result) {
                 boolean same = true;
                 for (int slot = 0; slot < 9; slot++) {

@@ -23,7 +23,7 @@ class RecipeInputVariantsTest {
         var original = new ItemStack[9];
         Arrays.setAll(original, i -> new ItemStack(Items.CHERRY_PLANKS));
         for (int slot : new int[]{0, 2, 6, 8}) original[slot] = new ItemStack(Items.TRAPPED_CHEST);
-        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.BARREL, 4), server.overworld(), 64);
+        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.BARREL, 4), null, 64);
         assertEquals(2, variants.size());
         for (var variant : variants) {
             for (int slot : new int[]{1, 3, 4, 5, 7}) assertTrue(variant[slot].is(Items.CHERRY_PLANKS));
@@ -40,7 +40,7 @@ class RecipeInputVariantsTest {
         var recipe = new ShapedRecipe(null, null, pattern, new ItemStack(Items.CHEST));
         var original = grid(Items.DARK_OAK_PLANKS);
         original[4] = ItemStack.EMPTY;
-        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHEST), server.overworld(), 64);
+        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHEST), null, 64);
         assertEquals(2, variants.size());
         assertTrue(variants.stream().anyMatch(v -> v[0].is(Items.OAK_PLANKS)));
         for (var variant : variants) {
@@ -57,11 +57,11 @@ class RecipeInputVariantsTest {
         var original = new ItemStack[9];
         Arrays.fill(original, ItemStack.EMPTY);
         for (int slot : new int[]{0, 3, 4}) original[slot] = new ItemStack(Items.DARK_OAK_PLANKS);
-        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHEST), server.overworld(), 1);
+        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHEST), null, 1);
         assertEquals(1, variants.size());
         assertTrue(variants.getFirst()[1].isEmpty());
         assertTrue(variants.getFirst()[3].is(Items.DARK_OAK_PLANKS));
-        assertTrue(RecipeInputVariants.generate(recipe, original, new ItemStack(Items.DIAMOND), server.overworld(), 64).isEmpty());
+        assertTrue(RecipeInputVariants.generate(recipe, original, new ItemStack(Items.DIAMOND), null, 64).isEmpty());
     }
 
     @Test
@@ -76,7 +76,7 @@ class RecipeInputVariantsTest {
         var original = new ItemStack[9];
         Arrays.fill(original, ItemStack.EMPTY);
         original[0] = new ItemStack(Items.OAK_LOG);
-        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.OAK_PLANKS, 4), server.overworld(), 64);
+        var variants = RecipeInputVariants.generate(recipe, original, new ItemStack(Items.OAK_PLANKS, 4), null, 64);
         assertEquals(1, variants.size());
         assertTrue(variants.getFirst()[0].is(Items.OAK_LOG));
     }
