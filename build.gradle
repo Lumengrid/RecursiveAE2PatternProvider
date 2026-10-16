@@ -54,6 +54,7 @@ runs {
     // NeoGradle creates a 'tests' run for the test source set; give it the JUnit run type 1.21.1 userdev provides.
     tests {
         runType 'junit'
+        unitTestSource sourceSets.test
     }
 }
 
@@ -110,12 +111,23 @@ dependencies {
 }
 
 // The tests need a NeoForge test server that is not wired up yet: run them only with -PrunTests.
+// NeoGradle runs JUnit inside FML through the 'tests' run's task (testTests); the plain test task lacks that setup.
 if (project.hasProperty('runTests')) {
-    tasks.named('test', Test) {
+    tasks.withType(Test).matching { it.name == 'testTests' }.configureEach {
         useJUnitPlatform()
+        // A test whose server never starts would otherwise wait forever.
+        systemProperty 'junit.jupiter.execution.timeout.default', '2m'
+        // KubeJS crashes the ephemeral test server; keep optional integrations off this task's classpath too.
+        // NeoGradle sets the classpath after configuration, so filter it right before the tests start.
+        doFirst {
+            classpath = classpath.filter { file ->
+                !['titanium-287342', 'athena-841890', 'geckolib-388172', 'glodium-957920',
+                  'ftlibrary-404465', 'ftpessential-410811', 'rhino-416294', 'kubejs-238086'].any { file.name.startsWith(it) }
+            }
+        }
     }
 } else {
-    gradle.startParameter.excludedTaskNames << 'test'
+    gradle.startParameter.excludedTaskNames.addAll(['test', 'testTests'])
 }
 
 // Keep unrelated optional integrations out of the recipe regression environment.
