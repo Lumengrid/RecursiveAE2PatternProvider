@@ -4,6 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.lumengrid.recursiveae2patternprovider.mixin.RecursiveAE2MixinPlugin",
   "mixins": [
+    "CraftingServiceMixin",
+    "CraftConfirmMenuMixin",
     "PatternProviderLogicMixin",
     "PatternEncodingTermMenuMixin",
     "TileAssemblerMatrixPatternMixin",
@@ -12,6 +14,8 @@
     "WirelessComprehensiveWorkTerminalMenuMixin"
   ],
   "client": [
+    "client.CraftConfirmScreenMixin",
+    "client.CraftConfirmTableRendererMixin",
     "client.CraftingEncodingPanelMixin",
     "client.WirelessComprehensiveWorkTerminalScreenMixin",
     "client.ScreenAccessor"
