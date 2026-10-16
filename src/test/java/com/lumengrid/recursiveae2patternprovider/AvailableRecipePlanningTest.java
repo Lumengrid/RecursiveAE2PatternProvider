@@ -53,7 +53,7 @@ class AvailableRecipePlanningTest {
         var holder = new net.minecraft.world.item.crafting.RecipeHolder<CraftingRecipe>(net.minecraft.resources.ResourceLocation.parse("test:cherry_planks"), recipe);
         var original = new ItemStack[9]; Arrays.fill(original, ItemStack.EMPTY); original[0] = new ItemStack(Items.CHERRY_LOG);
         List<IPatternDetails> patterns = new ArrayList<>();
-        for (var variant : RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHERRY_PLANKS, 4), server.overworld(), 64)) {
+        for (var variant : RecipeInputVariants.generate(recipe, original, new ItemStack(Items.CHERRY_PLANKS, 4), null, 64)) {
             var encoded = RecursivePatternGenerator.encodePatternStack(holder, variant, new ItemStack(Items.CHERRY_PLANKS, 4), null);
             IPatternDetails pattern = processing(List.of(new GenericStack(AEItemKey.of(variant[0]), 1)), Items.CHERRY_PLANKS, 4);
             if (encoded.get(appeng.api.ids.AEComponents.ENCODED_CRAFTING_PATTERN).canSubstitute()) pattern = flexibleCherryLogs(pattern);
@@ -139,11 +139,11 @@ class AvailableRecipePlanningTest {
         Arrays.setAll(original, i -> new ItemStack(Items.DARK_OAK_PLANKS));
         original[4] = ItemStack.EMPTY;
         List<IPatternDetails> patterns = new ArrayList<>();
-        for (var grid : RecipeInputVariants.generate(chestRecipe, original, new ItemStack(Items.CHEST), server.overworld(), 64)) {
+        for (var grid : RecipeInputVariants.generate(chestRecipe, original, new ItemStack(Items.CHEST), null, 64)) {
             patterns.add(processing(Arrays.stream(grid).filter(s -> !s.isEmpty()).map(s -> new GenericStack(AEItemKey.of(s), 1)).toList(), Items.CHEST, 1));
         }
         original[4] = new ItemStack(Items.CHEST);
-        for (var grid : RecipeInputVariants.generate(drawerRecipe, original, new ItemStack(Items.BARREL), server.overworld(), 64)) {
+        for (var grid : RecipeInputVariants.generate(drawerRecipe, original, new ItemStack(Items.BARREL), null, 64)) {
             patterns.add(processing(Arrays.stream(grid).filter(s -> !s.isEmpty()).map(s -> new GenericStack(AEItemKey.of(s), 1)).toList(), Items.BARREL, 1));
         }
         patterns.add(processing(List.of(new GenericStack(AEItemKey.of(Items.BARREL), 1), new GenericStack(AEItemKey.of(Items.CHEST), 2)), Items.CLOCK, 1));
