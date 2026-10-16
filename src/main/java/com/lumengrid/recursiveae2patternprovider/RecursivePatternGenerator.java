@@ -6,6 +6,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.AECraftingPattern;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -136,7 +137,7 @@ public final class RecursivePatternGenerator {
             this.index = index;
             this.settings = settings;
             var registries = level.registryAccess();
-            this.selection = new RecipeSelection(index, getFurnaceOutputs(level), registries,
+            this.selection = new RecipeSelection(index, getFurnaceOutputs(level.getRecipeManager(), registries), registries,
                     r -> !settings.isBlacklisted(r.id())
                             && (!settings.skipSelfReferential() || !usesItem(r.value(),
                             r.value().getResultItem(registries).getItem())),
@@ -151,11 +152,15 @@ public final class RecursivePatternGenerator {
      * Automatically rebuilt when the recipe manager instance or its recipe count changes.
      */
     private static Map<Item, List<RecipeHolder<CraftingRecipe>>> getRecipeIndex(Level level) {
-        return getIndex(level).index();
+        return getRecipeIndex(level.getRecipeManager(), level.registryAccess());
     }
 
-    private static CachedIndex getIndex(Level level) {
-        RecipeManager manager = level.getRecipeManager();
+    private static Map<Item, List<RecipeHolder<CraftingRecipe>>> getRecipeIndex(RecipeManager manager,
+                                                                              HolderLookup.Provider registryAccess) {
+        return getIndex(manager, registryAccess).index();
+    }
+
+    private static CachedIndex getIndex(RecipeManager manager, HolderLookup.Provider registryAccess) {
         CachedIndex snapshot = cached;
         if (snapshot != null && snapshot.matches(manager, manager.getRecipes().size())) {
             return snapshot;
@@ -169,7 +174,6 @@ public final class RecursivePatternGenerator {
             long start = System.nanoTime();
             Map<Item, List<RecipeHolder<CraftingRecipe>>> newIndex = new HashMap<>();
             Set<Item> furnaceOutputs = new HashSet<>();
-            var registryAccess = level.registryAccess();
             for (RecipeHolder<?> holder : manager.getRecipes()) {
                 if (holder.value() instanceof AbstractCookingRecipe cooking) {
                     try {
@@ -204,8 +208,8 @@ public final class RecursivePatternGenerator {
         }
     }
 
-    private static Set<Item> getFurnaceOutputs(Level level) {
-        return getIndex(level).furnaceOutputs();
+    private static Set<Item> getFurnaceOutputs(RecipeManager manager, HolderLookup.Provider registryAccess) {
+        return getIndex(manager, registryAccess).furnaceOutputs();
     }
 
     /**
