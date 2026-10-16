@@ -6,7 +6,6 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.AECraftingPattern;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +16,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,22 +28,24 @@ public final class RecursivePatternGenerator {
     private RecursivePatternGenerator() {}
 
     private record CachedIndex(WeakReference<Object> manager, int recipeCount,
-                               Map<Item, List<RecipeHolder<CraftingRecipe>>> index) {
+                               Map<Item, List<RecipeHolder<CraftingRecipe>>> index, Set<Item> furnaceOutputs) {
         boolean matches(Object current, int currentRecipeCount) {
             return manager.get() == current && recipeCount == currentRecipeCount;
         }
     }
 
-    private record Settings(int maxAlternativesPerItem, boolean skipSelfReferential,
+    private record Settings(int maxAlternativesPerItem, boolean retainAlternatives, boolean skipSelfReferential,
                             Set<String> blacklistExact, List<String> blacklistPrefixes) {
 
         static Settings fromConfig() {
             int maxAlternatives = 1;
+            boolean retainAlternatives = true;
             boolean skipSelf = true;
             Set<String> exact = new HashSet<>();
             List<String> prefixes = new ArrayList<>();
             try {
                 maxAlternatives = Math.max(1, Config.MAX_ALTERNATIVES_PER_ITEM.get());
+                retainAlternatives = Config.RETAIN_RECIPE_ALTERNATIVES.get();
                 skipSelf = Config.SKIP_SELF_REFERENTIAL_RECIPES.get();
                 for (Object entry : Config.RECIPE_BLACKLIST.get()) {
                     if (entry == null) continue;
@@ -61,7 +61,7 @@ public final class RecursivePatternGenerator {
                 RecursiveAE2PatternProvider.LOGGER.warn("Failed to read recipe selection config, using defaults: {}",
                         e.getMessage());
             }
-            return new Settings(maxAlternatives, skipSelf, exact, prefixes);
+            return new Settings(maxAlternatives, retainAlternatives, skipSelf, exact, prefixes);
         }
 
         boolean isBlacklisted(Identifier recipeId) {
@@ -83,12 +83,18 @@ public final class RecursivePatternGenerator {
         final Set<AEItemKey> processedItems = new HashSet<>();
         final Set<Item> ancestors = new HashSet<>();
         final List<IPatternDetails> generated = new ArrayList<>();
+        final RecipeSelection selection;
 
         Context(Level level, int maxDepth, Map<Item, List<RecipeHolder<CraftingRecipe>>> index, Settings settings) {
             this.level = level;
             this.maxDepth = maxDepth;
             this.index = index;
             this.settings = settings;
+            this.selection = new RecipeSelection(index, getFurnaceOutputs(level.getServer().getRecipeManager()),
+                    r -> !settings.isBlacklisted(r.id().identifier())
+                            && (!settings.skipSelfReferential() || !usesItem(r.value(),
+                            r.value().assemble(CraftingInput.EMPTY).getItem())),
+                    RecursivePatternGenerator::getRecipeInputsAs3x3Grid);
         }
     }
 
@@ -99,6 +105,10 @@ public final class RecursivePatternGenerator {
             return new HashMap<>();
         }
         RecipeManager manager = level.getServer().getRecipeManager();
+        return getRecipeIndex(manager);
+    }
+
+    private static Map<Item, List<RecipeHolder<CraftingRecipe>>> getRecipeIndex(RecipeManager manager) {
         int recipeCount = manager.getRecipes().size();
         CachedIndex snapshot = cached;
         if (snapshot != null && snapshot.matches(manager, recipeCount)) {
@@ -111,8 +121,16 @@ public final class RecursivePatternGenerator {
             }
             long start = System.nanoTime();
             Map<Item, List<RecipeHolder<CraftingRecipe>>> newIndex = new HashMap<>();
-            var registryAccess = level.registryAccess();
+            Set<Item> furnaceOutputs = new HashSet<>();
             for (RecipeHolder<?> holder : manager.getRecipes()) {
+                if (holder.value() instanceof AbstractCookingRecipe cooking) {
+                    try {
+                        var result = cooking.assemble(new SingleRecipeInput(ItemStack.EMPTY));
+                        if (!result.isEmpty()) furnaceOutputs.add(result.getItem());
+                    } catch (RuntimeException e) {
+                        RecursiveAE2PatternProvider.LOGGER.debug("Skipping cooking recipe {}: {}", holder.id(), e.getMessage());
+                    }
+                }
                 if (holder.value() instanceof CraftingRecipe craftingRecipe) {
                     @SuppressWarnings("unchecked")
                     RecipeHolder<CraftingRecipe> recipe = (RecipeHolder<CraftingRecipe>) holder;
@@ -127,13 +145,19 @@ public final class RecursivePatternGenerator {
                     }
                 }
             }
-            cached = new CachedIndex(new WeakReference<>(manager), recipeCount, newIndex);
+            newIndex.values().forEach(recipes -> recipes.sort(java.util.Comparator.comparing(r -> r.id().identifier().toString())));
+            cached = new CachedIndex(new WeakReference<>(manager), recipeCount, newIndex, furnaceOutputs);
             RecursiveAE2PatternProvider.LOGGER.info(
                     "Indexed {} crafting recipes by output item in {} ms",
                     newIndex.values().stream().mapToInt(List::size).sum(),
                     (System.nanoTime() - start) / 1_000_000);
             return newIndex;
         }
+    }
+
+    private static Set<Item> getFurnaceOutputs(RecipeManager manager) {
+        getRecipeIndex(manager);
+        return cached == null ? Set.of() : cached.furnaceOutputs();
     }
 
     public static List<IPatternDetails> collectRecursivePatterns(Iterable<ItemStack> patternInventory, Level level) {
@@ -255,21 +279,19 @@ public final class RecursivePatternGenerator {
             return;
         }
 
-        String ownerNamespace = BuiltInRegistries.ITEM.getKey(targetType).getNamespace();
-
-        List<RecipeHolder<CraftingRecipe>> ordered = candidates.stream()
+        var choices = ctx.settings.retainAlternatives()
+                ? ctx.selection.alternatives(targetType, ctx.ancestors)
+                : ctx.selection.rank(targetType, ctx.ancestors);
+        List<RecipeHolder<CraftingRecipe>> ordered = choices.stream()
+                .map(RecipeSelection.Choice::recipe)
                 .filter(r -> !ctx.processedRecipes.contains(r.id().toString()))
                 .filter(r -> !ctx.settings.isBlacklisted(r.id().identifier()))
                 .filter(r -> !ctx.settings.skipSelfReferential() || !usesItem(r.value(), targetType))
-                .sorted(Comparator
-                        .comparingInt((RecipeHolder<CraftingRecipe> r) -> isPlainVanilla(r.value()) ? 0 : 1)
-                        .thenComparingInt(r -> r.id().identifier().getNamespace().equals(ownerNamespace) ? 0 : 1)
-                        .thenComparing(r -> r.id().toString()))
                 .toList();
 
         int created = 0;
         for (var recipe : ordered) {
-            if (created >= ctx.settings.maxAlternativesPerItem()) {
+            if (created >= (ctx.settings.retainAlternatives() ? 64 : ctx.settings.maxAlternativesPerItem())) {
                 break;
             }
 
@@ -282,30 +304,30 @@ public final class RecursivePatternGenerator {
                     continue;
                 }
 
-                ItemStack[] inputs = getRecipeInputsAs3x3Grid(recipe.value());
+                ItemStack[] original = getRecipeInputsAs3x3Grid(recipe.value());
+                int remaining = (ctx.settings.retainAlternatives() ? 64 : ctx.settings.maxAlternativesPerItem()) - created;
+                List<ItemStack[]> variants = Config.GENERATED_INGREDIENT_ALTERNATIVES.get()
+                        ? RecipeInputVariants.generate(recipe.value(), original, recipeOutput, ctx.level, remaining)
+                        : java.util.Collections.singletonList(original);
+                for (ItemStack[] inputs : variants) {
+                    if (shouldSkipDependency(inputs, targetType, ctx.ancestors, ctx.settings.retainAlternatives())) continue;
+                    try {
+                        AECraftingPattern aePattern = encodePattern(recipe, inputs, recipeOutput, parentPattern, ctx.level);
+                        if (aePattern == null || aePattern.getOutputs() == null || aePattern.getOutputs().isEmpty()) continue;
+                        ctx.generated.add(aePattern);
+                        PlanExplanation.registerGenerated(aePattern);
+                        created++;
+                        ctx.processedRecipes.add(recipe.id().toString());
 
-                if (containsAny(inputs, ctx.ancestors) || containsItem(inputs, targetType)) {
-                    RecursiveAE2PatternProvider.LOGGER.debug("Skipping cyclic recipe {} for {}",
-                            recipe.id(), targetType);
-                    continue;
-                }
-
-                ctx.processedRecipes.add(recipe.id().toString());
-
-                AECraftingPattern aePattern = encodePattern(recipe, inputs, recipeOutput, parentPattern, ctx.level);
-                if (aePattern == null || aePattern.getOutputs() == null || aePattern.getOutputs().isEmpty()) {
-                    continue;
-                }
-
-                ctx.generated.add(aePattern);
-                created++;
-
-                boolean added = ctx.ancestors.add(targetType);
-                try {
-                    generateDependencyPatterns(aePattern, currentDepth + 1, ctx);
-                } finally {
-                    if (added) {
-                        ctx.ancestors.remove(targetType);
+                        if (ctx.settings.retainAlternatives() && ctx.selection.isConversion(inputs, targetType)) continue;
+                        boolean added = ctx.ancestors.add(targetType);
+                        try {
+                            generateDependencyPatterns(aePattern, currentDepth + 1, ctx);
+                        } finally {
+                            if (added) ctx.ancestors.remove(targetType);
+                        }
+                    } catch (RuntimeException e) {
+                        RecursiveAE2PatternProvider.LOGGER.debug("Failed ingredient variant for {}: {}", recipe.id(), e.getMessage());
                     }
                 }
 
@@ -319,6 +341,12 @@ public final class RecursivePatternGenerator {
     private static AECraftingPattern encodePattern(RecipeHolder<CraftingRecipe> recipe, ItemStack[] inputs,
                                                    ItemStack output, IPatternDetails parentPattern,
                                                    Level level) {
+        ItemStack patternStack = encodePatternStack(recipe, inputs, output, parentPattern);
+        return new AECraftingPattern(Objects.requireNonNull(AEItemKey.of(patternStack)), level);
+    }
+
+    static ItemStack encodePatternStack(RecipeHolder<CraftingRecipe> recipe, ItemStack[] inputs,
+                                       ItemStack output, IPatternDetails parentPattern) {
         ItemStack patternStack = AEItems.CRAFTING_PATTERN.stack();
 
         boolean allowSubstitutes = Config.DEFAULT_ALLOW_SUBSTITUTES.get();
@@ -329,8 +357,17 @@ public final class RecursivePatternGenerator {
             allowFluidSubstitutes = parentCraftingPattern.canSubstituteFluids();
         }
 
+        // Each validated primary variant is a separate planning choice. Keep
+        // execution bound to that choice: a runtime substitute can consume
+        // stock reserved for another dependency and deadlock an otherwise valid plan.
+        if (Config.GENERATED_INGREDIENT_ALTERNATIVES.get()) allowSubstitutes = false;
+
         AECraftingPattern.encode(patternStack, recipe, inputs, output, allowSubstitutes, allowFluidSubstitutes);
-        return new AECraftingPattern(Objects.requireNonNull(AEItemKey.of(patternStack)), level);
+        return patternStack;
+    }
+
+    static boolean shouldSkipDependency(ItemStack[] inputs, Item target, Set<Item> ancestors, boolean retainAlternatives) {
+        return containsItem(inputs, target) || (!retainAlternatives && containsAny(inputs, ancestors));
     }
 
     private static boolean usesItem(CraftingRecipe recipe, Item item) {
@@ -344,11 +381,6 @@ public final class RecursivePatternGenerator {
             return true;
         }
         return false;
-    }
-
-    private static boolean isPlainVanilla(CraftingRecipe recipe) {
-        Class<?> type = recipe.getClass();
-        return type == ShapedRecipe.class || type == ShapelessRecipe.class;
     }
 
     private static boolean containsAny(ItemStack[] grid, Set<Item> items) {
@@ -375,13 +407,16 @@ public final class RecursivePatternGenerator {
         if (recipe instanceof ShapedRecipe shapedRecipe) {
             int width = shapedRecipe.getWidth();
             int height = shapedRecipe.getHeight();
+            var slotsToIngredientIndex = recipe.placementInfo().slotsToIngredientIndex();
 
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    int ingredientIndex = y * width + x;
+                    // Placement ingredients omit empty slots; map each recipe slot
+                    // back to its ingredient to preserve holes in shaped recipes.
+                    int ingredientIndex = slotsToIngredientIndex.getInt(y * width + x);
                     int gridIndex = y * 3 + x;
 
-                    if (ingredientIndex < ingredients.size()) {
+                    if (ingredientIndex >= 0 && ingredientIndex < ingredients.size()) {
                         var ingredient = ingredients.get(ingredientIndex);
                         var first = ingredient.items().findFirst();
                         if (first.isPresent()) {
