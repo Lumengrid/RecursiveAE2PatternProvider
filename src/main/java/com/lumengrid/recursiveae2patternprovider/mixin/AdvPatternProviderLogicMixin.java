@@ -3,6 +3,7 @@ package com.lumengrid.recursiveae2patternprovider.mixin;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.stacks.AEKey;
 import appeng.util.inv.AppEngInternalInventory;
 import com.lumengrid.recursiveae2patternprovider.Config;
@@ -61,10 +62,6 @@ public abstract class AdvPatternProviderLogicMixin implements RefreshingRecursiv
         return true;
     }
 
-    /**
-     * Inject dependency pattern generation after the original updatePatterns() completes.
-     * All heavy lifting is delegated to RecursivePatternGenerator (shared cached index).
-     */
     @Inject(method = "updatePatterns", at = @At("RETURN"), remap = false)
     private void injectDependencyPatterns(CallbackInfo ci) {
         recursiveAE2$hasRecursivePatterns = false;
@@ -88,8 +85,10 @@ public abstract class AdvPatternProviderLogicMixin implements RefreshingRecursiv
 
             recursiveAE2$hasRecursivePatterns = !recursivePatterns.isEmpty();
 
+            ICraftingService craftingService = this.mainNode.getGrid() != null ? this.mainNode.getGrid().getService(ICraftingService.class) : null;
+
             List<IPatternDetails> generated =
-                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth, craftingService);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, this.patternInputs);
 

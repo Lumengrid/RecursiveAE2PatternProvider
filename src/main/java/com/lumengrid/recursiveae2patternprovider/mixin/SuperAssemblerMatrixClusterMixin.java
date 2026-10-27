@@ -2,6 +2,7 @@ package com.lumengrid.recursiveae2patternprovider.mixin;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.inventories.InternalInventory;
+import appeng.api.networking.crafting.ICraftingService;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import com.extendedae_plus.content.matrix.supermatrix.SuperAssemblerMatrixCluster;
 import com.extendedae_plus.util.crafting.StrictMolecularAssemblerPattern;
@@ -17,21 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ExtendedAE Plus - Super Assembler Matrix integration.
- *
- * Unlike the other providers, the Super Assembler Matrix does not keep a cached
- * pattern list: the core block entity (an ICraftingProvider) delegates
- * getAvailablePatterns() to the cluster, which decodes the hybrid cores'
- * pattern inventories on every call. We therefore append the generated
- * dependency patterns to the returned list.
- *
- * Only molecular-assembler-compatible patterns are relevant here, because the
- * cluster can only execute those (see SuperAssemblerMatrixCluster#pushPattern).
- * Generated patterns are wrapped with StrictMolecularAssemblerPattern exactly
- * like EAP does for the patterns it decodes, so EAP's own logic (power
- * calculation, scaling) treats them the same way.
- */
 @Mixin(value = SuperAssemblerMatrixCluster.class, remap = false)
 public abstract class SuperAssemblerMatrixClusterMixin {
 
@@ -48,7 +34,6 @@ public abstract class SuperAssemblerMatrixClusterMixin {
             }
 
             List<IPatternDetails> original = cir.getReturnValue();
-            // Empty = destroyed cluster, no core, no pattern cores or no patterns: nothing to expand.
             if (original == null || original.isEmpty()) {
                 return;
             }
@@ -63,7 +48,6 @@ public abstract class SuperAssemblerMatrixClusterMixin {
                 return;
             }
 
-            // Recursive patterns from every hybrid core, limited to what the matrix can execute.
             List<IPatternDetails> recursivePatterns = new ArrayList<>();
             for (InternalInventory inventory : self.getPatternInventories()) {
                 for (IPatternDetails details : RecursivePatternGenerator.collectRecursivePatterns(inventory, level)) {
@@ -76,15 +60,14 @@ public abstract class SuperAssemblerMatrixClusterMixin {
                 return;
             }
 
-            // The original list holds all patterns the user put in the matrix:
-            // the generator will not create alternatives for items already covered.
+            ICraftingService craftingService = core.getMainNode().getGrid() != null ? core.getMainNode().getGrid().getService(ICraftingService.class) : null;
+
             List<IPatternDetails> generated =
-                    RecursivePatternGenerator.generate(recursivePatterns, original, level, maxDepth);
+                    RecursivePatternGenerator.generate(recursivePatterns, original, level, maxDepth, craftingService);
             if (generated.isEmpty()) {
                 return;
             }
 
-            // The original may be immutable (List.of()), always return a new list.
             List<IPatternDetails> result = new ArrayList<>(original.size() + generated.size());
             result.addAll(original);
             for (IPatternDetails pattern : generated) {

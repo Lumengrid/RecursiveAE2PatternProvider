@@ -17,6 +17,10 @@ public final class PlanExplanation {
         GENERATED.put(pattern, Boolean.TRUE);
     }
 
+    public static boolean isGenerated(IPatternDetails pattern) {
+        return GENERATED.containsKey(pattern);
+    }
+
     public static Map<AEKey, List<AEKey>> analyze(ICraftingPlan plan) {
         if (!plan.simulation()) return Map.of();
         Map<AEKey, LinkedHashSet<AEKey>> sources = new LinkedHashMap<>();

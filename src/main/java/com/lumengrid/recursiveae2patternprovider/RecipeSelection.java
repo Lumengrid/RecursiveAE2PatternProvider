@@ -56,9 +56,41 @@ final class RecipeSelection {
                 // An unreadable conversion is not a usable alternative.
             }
         }
+        // rank() drops every recipe whose ingredients loop back into the recipe graph (e.g. tiered
+        // essences that uncraft into each other). Those are still valid alternatives, since AE2
+        // rejects recursive branches per calculation; they just rank below acyclic recipes.
+        Set<RecipeHolder<CraftingRecipe>> cyclic = new HashSet<>();
+        for (var recipe : index.getOrDefault(target, List.of())) {
+            if (choices.containsKey(recipe)) continue;
+            try {
+                if (!allowed.test(recipe)) continue;
+                var output = recipe.value().getResultItem(registries);
+                if (output.isEmpty() || !output.is(target)) continue;
+                double inputs = 1;
+                boolean usable = true;
+                for (var input : grid.apply(recipe.value())) {
+                    if (input.isEmpty()) continue;
+                    // Consuming the target itself, or a metal's own block/nugget, is never a new source.
+                    if (input.is(target) || (furnaceOutputs.contains(target) && reverses(input.getItem(), target))) {
+                        usable = false;
+                        break;
+                    }
+                    inputs += input.getCount();
+                }
+                if (usable) {
+                    choices.put(recipe, new Choice(recipe, inputs / output.getCount()));
+                    cyclic.add(recipe);
+                }
+            } catch (RuntimeException ignored) {
+                // An unreadable recipe is not a usable alternative.
+            }
+        }
         var ordered = new ArrayList<>(choices.values());
-        // Common recipes first, but keep alternatives for AE2's stock-aware search.
-        ordered.sort(Comparator.comparingInt((Choice c) -> c.recipe().id().getNamespace()
+        // Acyclic crafting recipes first, then cyclic ones; stock conversions (block -> items) last so
+        // they never shadow real recipes or consume the per-item cap. All stay available to AE2's search.
+        ordered.sort(Comparator.comparingInt((Choice c) -> isConversion(c.recipe().value(), target) ? 2
+                        : cyclic.contains(c.recipe()) ? 1 : 0)
+                .thenComparingInt((Choice c) -> c.recipe().id().getNamespace()
                         .equals(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(target).getNamespace()) ? 0 : 1)
                 .thenComparingDouble(Choice::cost)
                 .thenComparing(c -> c.recipe().id().toString()));
