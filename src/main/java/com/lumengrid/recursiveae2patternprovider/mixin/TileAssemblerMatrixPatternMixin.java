@@ -2,6 +2,7 @@ package com.lumengrid.recursiveae2patternprovider.mixin;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.crafting.ICraftingService;
 import com.glodblock.github.extendedae.common.tileentities.matrix.TileAssemblerMatrixPattern;
 import com.lumengrid.recursiveae2patternprovider.Config;
 import com.lumengrid.recursiveae2patternprovider.RecursiveAE2PatternProvider;
@@ -49,8 +50,10 @@ public class TileAssemblerMatrixPatternMixin {
             List<IPatternDetails> recursivePatterns =
                     RecursivePatternGenerator.collectRecursivePatterns(self.getPatternInventory(), level);
 
+            ICraftingService craftingService = self.getMainNode().getGrid() != null ? self.getMainNode().getGrid().getService(ICraftingService.class) : null;
+
             List<IPatternDetails> generated =
-                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth, craftingService);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, null);
 

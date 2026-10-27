@@ -2,3 +2,7 @@
 .idea
 runs
 build
+bin/
+.claude/
+.eclipse/
+.serena/

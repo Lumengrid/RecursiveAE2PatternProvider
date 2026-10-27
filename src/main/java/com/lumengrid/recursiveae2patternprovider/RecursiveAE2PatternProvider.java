@@ -15,7 +15,11 @@ import net.neoforged.fml.ModContainer;
 public class RecursiveAE2PatternProvider {
     public static final String MODID = "recursiveae2patternprovider";
     public static final Logger LOGGER = LogUtils.getLogger();
+    /** Changes whenever the recipe-selection behaviour changes; logged so a stale jar is obvious. */
+    public static final String BUILD_MARKER = "alt-priority-2026-10-27-tier-uncraft-last-mc26.1";
+
     public RecursiveAE2PatternProvider(IEventBus modEventBus, ModContainer modContainer) {
+        LOGGER.info("Recursive AE2 Pattern Provider loaded, build={}", BUILD_MARKER);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         modEventBus.addListener(ModNetwork::registerPayloadHandlers);
         RecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);

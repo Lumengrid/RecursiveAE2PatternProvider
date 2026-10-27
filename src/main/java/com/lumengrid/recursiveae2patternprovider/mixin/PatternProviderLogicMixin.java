@@ -4,6 +4,7 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.stacks.AEKey;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
@@ -89,8 +90,10 @@ public abstract class PatternProviderLogicMixin implements RefreshingRecursivePr
 
             recursiveAE2$hasRecursivePatterns = !recursivePatterns.isEmpty();
 
+            ICraftingService craftingService = this.mainNode.getGrid() != null ? this.mainNode.getGrid().getService(ICraftingService.class) : null;
+
             List<IPatternDetails> generated =
-                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth);
+                    RecursivePatternGenerator.generate(recursivePatterns, this.patterns, level, maxDepth, craftingService);
 
             RecursivePatternGenerator.appendGenerated(generated, this.patterns, this.patternInputs);
 

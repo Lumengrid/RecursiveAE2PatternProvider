@@ -2,6 +2,7 @@ package com.lumengrid.recursiveae2patternprovider.mixin;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.inventories.InternalInventory;
+import appeng.api.networking.crafting.ICraftingService;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import com.extendedae_plus.content.matrix.supermatrix.SuperAssemblerMatrixCluster;
 import com.extendedae_plus.util.crafting.StrictMolecularAssemblerPattern;
@@ -78,8 +79,10 @@ public abstract class SuperAssemblerMatrixClusterMixin {
 
             // The original list holds all patterns the user put in the matrix:
             // the generator will not create alternatives for items already covered.
+            ICraftingService craftingService = core.getMainNode().getGrid() != null ? core.getMainNode().getGrid().getService(ICraftingService.class) : null;
+
             List<IPatternDetails> generated =
-                    RecursivePatternGenerator.generate(recursivePatterns, original, level, maxDepth);
+                    RecursivePatternGenerator.generate(recursivePatterns, original, level, maxDepth, craftingService);
             if (generated.isEmpty()) {
                 return;
             }

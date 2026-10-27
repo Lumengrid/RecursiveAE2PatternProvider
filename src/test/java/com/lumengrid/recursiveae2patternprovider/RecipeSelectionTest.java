@@ -27,9 +27,11 @@ class RecipeSelectionTest {
         var selection = selector(Set.of(Items.REDSTONE));
         var choices = selection.alternatives(Items.REDSTONE, Set.of());
         assertEquals(2, choices.size());
-        assertEquals("minecraft:redstone_from_block", choices.getFirst().recipe().id().identifier().toString());
-        assertTrue(selection.isConversion(choices.getFirst().recipe().value(), Items.REDSTONE));
-        assertFalse(selection.isConversion(choices.getLast().recipe().value(), Items.REDSTONE));
+        // The real crafting recipe outranks the stock conversion, even though the conversion is cheaper.
+        assertEquals("reliquary:uncrafting/redstone", choices.getFirst().recipe().id().identifier().toString());
+        assertFalse(selection.isConversion(choices.getFirst().recipe().value(), Items.REDSTONE));
+        assertEquals("minecraft:redstone_from_block", choices.getLast().recipe().id().identifier().toString());
+        assertTrue(selection.isConversion(choices.getLast().recipe().value(), Items.REDSTONE));
     }
 
     @Test
@@ -48,6 +50,46 @@ class RecipeSelectionTest {
         assertTrue(choices.stream().anyMatch(c -> c.recipe().id().identifier().toString().equals("minecraft:ingot_from_block")));
         var selection = new RecipeSelection(index, Set.of(), r -> false, this::grid);
         assertTrue(selection.alternatives(Items.IRON_INGOT, Set.of()).isEmpty());
+    }
+
+    @Test
+    void stockConversionsRankAfterRealCraftingRecipes(MinecraftServer server) {
+        conversions(Items.IRON_INGOT, Items.IRON_BLOCK, Items.IRON_NUGGET);
+        add("test:essence", Items.IRON_INGOT, 4, Items.REDSTONE, 1);
+        var selection = selector(Set.of(Items.IRON_INGOT));
+        var choices = selection.alternatives(Items.IRON_INGOT, Set.of());
+        assertEquals(3, choices.size());
+        assertEquals("test:essence", choices.getFirst().recipe().id().identifier().toString());
+        assertTrue(choices.stream().skip(1).allMatch(c -> selection.isConversion(c.recipe().value(), Items.IRON_INGOT)));
+    }
+
+    @Test
+    void tierUncraftRanksAfterCyclicUpCraft(MinecraftServer server) {
+        add("test:up", Items.DIAMOND, 1, Items.EMERALD, Items.COAL);
+        add("test:emerald", Items.EMERALD, 1, Items.DIAMOND, Items.COAL);
+        // One emerald uncrafts into four diamonds: cheaper, but only useful when emeralds are in storage.
+        add("test:uncraft", Items.DIAMOND, 4, Items.EMERALD, 1);
+        var ids = selector(Set.of()).alternatives(Items.DIAMOND, Set.of()).stream()
+                .map(c -> c.recipe().id().identifier().toString()).toList();
+        assertEquals(List.of("test:up", "test:uncraft"), ids);
+    }
+
+    @Test
+    void cyclicRecipesAreKeptBetweenRealRecipesAndConversions(MinecraftServer server) {
+        conversions(Items.DIAMOND, Items.DIAMOND_BLOCK, Items.GOLD_NUGGET);
+        add("test:real", Items.DIAMOND, 1, Items.REDSTONE, Items.GOLD_INGOT);
+        // Emerald and diamond can be made from each other, so rank() rejects both as cyclic.
+        add("test:cyclic", Items.DIAMOND, 1, Items.EMERALD, Items.COAL);
+        add("test:emerald", Items.EMERALD, 1, Items.DIAMOND, Items.COAL);
+        var selection = selector(Set.of());
+        assertEquals(List.of("test:real"), selection.rank(Items.DIAMOND, Set.of()).stream()
+                .map(c -> c.recipe().id().identifier().toString()).toList());
+        var ids = selection.alternatives(Items.DIAMOND, Set.of()).stream()
+                .map(c -> c.recipe().id().identifier().toString()).toList();
+        assertEquals(4, ids.size());
+        assertEquals("test:real", ids.get(0));
+        assertEquals("test:cyclic", ids.get(1));
+        assertTrue(ids.subList(2, 4).stream().allMatch(id -> id.startsWith("minecraft:")));
     }
 
     @Test
@@ -144,6 +186,13 @@ class RecipeSelectionTest {
     private void add(String id, Item output, int count, Item input, int inputCount) {
         String[] rows = inputCount == 9 ? new String[]{"XXX", "XXX", "XXX"} : new String[]{"X".repeat(inputCount)};
         var pattern = ShapedRecipePattern.of(Map.of('X', Ingredient.of(input)), rows);
+        CraftingRecipe recipe = new ShapedRecipe(null, null, pattern, new ItemStackTemplate(output, count));
+        var holder = new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.parse(id)), recipe);
+        index.computeIfAbsent(output, k -> new ArrayList<>()).add(holder);
+    }
+
+    private void add(String id, Item output, int count, Item first, Item second) {
+        var pattern = ShapedRecipePattern.of(Map.of('X', Ingredient.of(first), 'Y', Ingredient.of(second)), "XY");
         CraftingRecipe recipe = new ShapedRecipe(null, null, pattern, new ItemStackTemplate(output, count));
         var holder = new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.parse(id)), recipe);
         index.computeIfAbsent(output, k -> new ArrayList<>()).add(holder);
