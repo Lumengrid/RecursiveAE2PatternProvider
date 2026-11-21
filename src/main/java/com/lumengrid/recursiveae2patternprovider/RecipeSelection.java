@@ -17,6 +17,7 @@ final class RecipeSelection {
     private final Set<Item> furnaceOutputs;
     private final Predicate<RecipeHolder<CraftingRecipe>> allowed;
     private final Function<CraftingRecipe, ItemStack[]> grid;
+    private final Map<Item, Double> itemCosts = new HashMap<>();
 
     RecipeSelection(Map<Item, List<RecipeHolder<CraftingRecipe>>> index, Set<Item> furnaceOutputs,
                     Predicate<RecipeHolder<CraftingRecipe>> allowed,
@@ -91,6 +92,15 @@ final class RecipeSelection {
                 .thenComparingDouble(Choice::cost)
                 .thenComparing(c -> c.recipe().id().identifier().toString()));
         return ordered;
+    }
+
+    /** What one {@code item} costs, using the same raw-item rule as {@link #cost}; infinite if it has no usable recipe. */
+    double itemCost(Item item) {
+        if (furnaceOutputs.contains(item) || !index.containsKey(item)) return 1;
+        return itemCosts.computeIfAbsent(item, i -> {
+            var ranked = rank(i, Set.of());
+            return ranked.isEmpty() ? Double.POSITIVE_INFINITY : ranked.getFirst().cost();
+        });
     }
 
     boolean isConversion(CraftingRecipe recipe, Item target) {

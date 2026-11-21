@@ -361,6 +361,7 @@ public final class RecursivePatternGenerator {
         }
 
         int recipesCreated = 0;
+        int rank = 0;
         for (var recipe : ordered) {
             // Stock conversions (block <-> items) are ranked last and never count toward the cap, so a
             // low limit cannot remove the unpack/pack recipes AE2 uses when those items are in storage.
@@ -385,10 +386,10 @@ public final class RecursivePatternGenerator {
                 ItemStack[] original = getRecipeInputsAs3x3Grid(recipe.value());
                 // Static selection picks one deterministic ingredient set per recipe; only retain mode
                 // publishes ingredient variants, otherwise tags (glass, wood...) multiply the patterns.
-                int variantLimit = ctx.settings.retainAlternatives() ? MAX_VARIANTS_PER_RECIPE : 1;
-                List<ItemStack[]> variants = Config.GENERATED_INGREDIENT_ALTERNATIVES.get()
-                        ? RecipeInputVariants.generate(recipe.value(), original, recipeOutput, ctx.level, variantLimit)
-                        : java.util.Collections.singletonList(original);
+                int variantLimit = Config.GENERATED_INGREDIENT_ALTERNATIVES.get() && ctx.settings.retainAlternatives()
+                        ? MAX_VARIANTS_PER_RECIPE : 1;
+                List<ItemStack[]> variants = RecipeInputVariants.generate(recipe.value(), original, recipeOutput,
+                        ctx.level, variantLimit, ctx.selection::itemCost);
                 for (ItemStack[] inputs : variants) {
                     if (shouldSkipDependency(inputs, targetType, ctx.ancestors, ctx.settings.retainAlternatives())) {
                         trace("[alternatives] {} skipped variant of {}: uses target or ancestor {}",
@@ -400,7 +401,9 @@ public final class RecursivePatternGenerator {
                         if (aePattern == null || aePattern.getOutputs() == null || aePattern.getOutputs().isEmpty()) continue;
                         ctx.generated.add(aePattern);
                         PlanExplanation.registerGenerated(aePattern);
+                        PatternOrdering.setRank(aePattern, rank++);
                         if (conversion) PatternOrdering.markStockDriven(aePattern);
+                        else if (recipeCounted) PatternOrdering.markVariant(aePattern);
                         if (!conversion && !recipeCounted) {
                             recipeCounted = true;
                             recipesCreated++;
@@ -527,9 +530,10 @@ public final class RecursivePatternGenerator {
 
         var ingredients = recipe.placementInfo().ingredients();
 
-        if (recipe instanceof ShapedRecipe shapedRecipe) {
-            int width = shapedRecipe.getWidth();
-            int height = shapedRecipe.getHeight();
+        int[] shape = RecipeInputVariants.shapedSize(recipe);
+        if (shape != null) {
+            int width = shape[0];
+            int height = shape[1];
             var slotsToIngredientIndex = recipe.placementInfo().slotsToIngredientIndex();
 
             for (int y = 0; y < height; y++) {

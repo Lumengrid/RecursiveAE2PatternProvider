@@ -33,6 +33,19 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class AvailableRecipePlanningTest {
     @Test
+    void glassInStockWithoutDyeStillCraftsWhicheverVariantIsTriedFirst(MinecraftServer server) throws Exception {
+        var fromStained = processing(List.of(new GenericStack(AEItemKey.of(Items.BLACK_STAINED_GLASS), 1)), Items.GLASS_BOTTLE, 1);
+        var fromPlain = processing(List.of(new GenericStack(AEItemKey.of(Items.GLASS), 1)), Items.GLASS_BOTTLE, 1);
+        var stained = processing(List.of(new GenericStack(AEItemKey.of(Items.GLASS), 8),
+                new GenericStack(AEItemKey.of(Items.BLACK_DYE), 1)), Items.BLACK_STAINED_GLASS, 8);
+        for (var patterns : List.of(List.of(fromStained, fromPlain, stained), List.of(fromPlain, fromStained, stained))) {
+            var plan = calculate(patterns, Map.of(Items.GLASS, 64L), Items.GLASS_BOTTLE, 1);
+            assertFalse(plan.simulation(), "A craftable item was reported as missing ingredients");
+            assertTrue(plan.missingItems().isEmpty());
+        }
+    }
+
+    @Test
     void runtimeSubstitutionCanSpendLogsReservedForAnotherTask(MinecraftServer server) throws Exception {
         var wood = processing(List.of(new GenericStack(AEItemKey.of(Items.CHERRY_LOG), 4)), Items.CHERRY_WOOD, 3);
         var planks = flexibleCherryLogs(processing(List.of(new GenericStack(AEItemKey.of(Items.CHERRY_LOG), 1)), Items.CHERRY_PLANKS, 4));

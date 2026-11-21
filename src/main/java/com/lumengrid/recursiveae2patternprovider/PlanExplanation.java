@@ -3,13 +3,15 @@ package com.lumengrid.recursiveae2patternprovider;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.stacks.AEKey;
+import com.google.common.collect.MapMaker;
 import java.util.*;
 
 /** Describes the selected partial plan, not a minimum-materials solution. */
 public final class PlanExplanation {
     public static final int MAX_SOURCES = 256;
     public static final int MAX_PRODUCTS = 4;
-    private static final Map<IPatternDetails, Boolean> GENERATED = Collections.synchronizedMap(new WeakHashMap<>());
+    // Weak and keyed by identity: see PatternOrdering.
+    private static final Map<IPatternDetails, Boolean> GENERATED = new MapMaker().weakKeys().makeMap();
 
     private PlanExplanation() {}
 
